@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+{% block topbar_sub %}<div class="topbar-sub">{{ ottelu_nimi }}</div>{% endblock %}
+{% block topbar_actions %}
+<a href="/ottelu/{{ ottelu_id }}/analyysi" class="btn btn-warning" style="padding:8px 12px;font-size:0.8rem;">📊 Analyysi</a>
+<a href="/" class="btn btn-ghost" style="padding:8px 12px;font-size:0.8rem;">← Koti</a>
+{% endblock %}
+
+{% block head %}
+<style>
+  /* Värit */
+  .väri-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+  .väri-btn{aspect-ratio:1;border-radius:10px;border:3px solid transparent;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
+    color:rgba(0,0,0,.7);transition:transform .1s,border-color .1s;user-select:none;position:relative}
+  .väri-btn.valittu{border-color:#fff;transform:scale(1.08);box-shadow:0 0 12px rgba(255,255,255,.3)}
+  .väri-btn .järjestys{position:absolute;top:3px;right:5px;font-size:.7rem;font-weight:800;color:rgba(0,0,0,.8)}
+  /* Valinnat */
+  .käsi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .valinta-btn{padding:10px 8px;border-radius:8px;border:2px solid #2a2e45;background:var(--surface2);
+    color:var(--text);cursor:pointer;text-align:center;font-size:.82rem;font-weight:600;transition:border-color .1s}
+  .valinta-btn.valittu{border-color:var(--accent);background:rgba(79,142,247,.15);color:var(--accent)}
+  .number-btn{flex:1;padding:12px;border-radius:8px;border:2px solid #2a2e45;background:var(--surface2);
+    color:var(--text);font-size:1.1rem;font-weight:700;cursor:pointer;text-align:center}
+  .number-btn.valittu{border-color:var(--accent2);background:rgba(247,163,79,.15);color:var(--accent2)}
+  .viimeisin-lista{max-height:200px;overflow-y:auto}
+  .havainto-rivi{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2e45;font-size:.83rem}
+  /* MENI / EI MENNYT */
+  .iso-btn{width:100%;padding:20px;border-radius:12px;border:3px solid transparent;
+    font-size:1.2rem;font-weight:800;cursor:pointer;transition:all .15s;text-align:center}
+  .iso-btn-meni{background:rgba(79,207,122,.15);border-color:#2a2e45;color:var(--success)}
+  .iso-btn-meni.valittu{background:var(--success);color:#0f1117;border-color:var(--success)}
+  .iso-btn-ei{background:rgba(247,87,87,.15);border-color:#2a2e45;color:var(--danger)}
+  .iso-btn-ei.valittu{background:var(--danger);color:#fff;border-color:var(--danger)}
+  /* Video */
+  .video-wrap{border-radius:10px;overflow:hidden;background:#000;margin-bottom:12px}
+  #video-player{width:100%;max-height:260px;display:block}
+  .merkki-btn{flex:1;min-width:140px;padding:12px 8px;border-radius:8px;border:2px solid #2a2e45;
+    background:var(--surface2);color:var(--text);cursor:pointer;font-size:.85rem;font-weight:700;
+    text-align:center;transition:border-color .15s,background .15s}
+  .merkki-btn.merkitty{border-color:var(--accent);background:rgba(79,142,247,.15);color:var(--accent)}
+  .ehdotus-strip{padding:10px 14px;border-radius:8px;font-weight:700;font-size:.9rem;
+    text-align:center;display:none;margin-bottom:8px}
+  .frame-btns{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
+  .frame-btn{padding:6px 14px;border-radius:6px;background:var(--surface2);
+    border:1px solid #2a2e45;color:var(--text);cursor:pointer;font-size:.82rem}
+  /* Tarkemmat tiedot -toggle */
+  .tarkemmat{display:none}
+  details>summary{cursor:pointer;color:var(--muted);font-size:.85rem;padding:4px 0;list-style:none}
+  details>summary::-webkit-details-marker{display:none}
+  details[open]>summary{color:var(--accent)}
+</style>
+{% endblock %}
+
+{% block content %}
+<script>
+const LENTO_MAX  = {{ asetukset.lento_max_ms|int }};
+const NOPEA_MAX  = {{ asetukset.nopea_vaara_max_ms|int }};
+const VAARAT_MAX = {{ asetukset.vaarat_pois_max_ms|int }};
+</script>
+
+<!-- Viimeiset havainnot -->
+{% if havainnot %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <div class="card-title" style="margin:0;">Viimeisimmät ({{ havainnot|length }})</div>
+    <form method="POST" action="/ottelu/{{ ottelu_id }}/poista_viimeisin">
+      <button class="btn btn-danger" style="padding:5px 10px;font-size:.75rem;" type="submit">↩ Poista viimeisin</button>
+    </form>
+  </div>
+  <div class="viimeisin-lista">
+    {% for h in havainnot[-5:]|reverse %}
+    <div class="havainto-rivi">
+      <span class="badge {% if h.tulos in ['lento','sikalento','meni','väärät_pois','nopea_väärä','iso_väärä'] %}badge-success{% elif h.tulos == 'pois' %}badge-danger{% else %}badge-muted{% endif %}">
+        {% if h.tulos in ['lento','sikalento','meni','väärät_pois','nopea_väärä','iso_väärä'] %}✅ meni{% elif h.tulos == 'pois' %}❌ ei{% else %}?{% endif %}
+      </span>
+      {% if h.kuvaus %}
+        <span style="color:var(--text);font-size:.82rem;">{{ h.kuvaus[:60] }}{% if h.kuvaus|length > 60 %}…{% endif %}</span>
+      {% else %}
+        <span style="color:var(--muted);">{{ h.värit|join(' → ') }}</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Videotyökalu -->
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <div class="card-title" style="margin:0;">🎬 Videotyökalu</div>
+    <button type="button" class="btn btn-ghost" style="padding:5px 10px;font-size:.75rem;"
+            onclick="toggleVideo()">Näytä / piilota</button>
+  </div>
+  <div id="video-osio" style="display:none;">
+    <p class="muted" style="font-size:.8rem;margin-bottom:10px;">
+      Avaa videopätkä → merkitse syöttö → merkitse etenijän lähtö → ohjelma ehdottaa tulosta.
+    </p>
+    <input type="file" id="video-valitsin" accept="video/*"
+           style="margin-bottom:10px;color:var(--text);" onchange="lataaVideo(this)">
+    <div class="video-wrap" id="video-wrap" style="display:none;">
+      <video id="video-player" controls playsinline></video>
+    </div>
+    <div class="frame-btns" id="frame-btns" style="display:none;">
+      <button type="button" class="frame-btn" onclick="askellaVideo(-1)">◀◀ −1s</button>
+      <button type="button" class="frame-btn" onclick="askellaVideo(-.1)">◀ −0.1s</button>
+      <button type="button" class="frame-btn" onclick="togglePlay()">▶/⏸</button>
+      <button type="button" class="frame-btn" onclick="askellaVideo(.1)">+0.1s ▶</button>
+      <button type="button" class="frame-btn" onclick="askellaVideo(1)">+1s ▶▶</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="merkki-napit" style="display:none;">
+      <button type="button" class="merkki-btn" id="btn-syotto" onclick="merkitseSyotto()">1️⃣ Syöttö nousee</button>
+      <button type="button" class="merkki-btn" id="btn-lahto"  onclick="meritseLahto()">2️⃣ Etenijä lähtee</button>
+    </div>
+    <div class="ehdotus-strip" id="ehdotus-strip"></div>
+    <div id="delta-teksti" class="muted" style="font-size:.8rem;text-align:center;min-height:16px;"></div>
+    <button type="button" class="btn btn-ghost btn-full" style="margin-top:8px;font-size:.8rem;display:none;"
+            id="nollaa-btn" onclick="nollaaVideo()">↺ Nollaa merkit</button>
+  </div>
+</div>
+
+<!-- LOMAKE -->
+<form method="POST" action="/ottelu/{{ ottelu_id }}/tallenna" id="syotto-form">
+  <input type="hidden" name="syotto_aika_ms" id="syotto-aika-input" value="">
+  <input type="hidden" name="tulos"      id="tulos-input"    value="epäselvä">
+  <input type="hidden" name="etenijat"   id="etenijat-input" value="ei">
+  <input type="hidden" name="vapaa_käsi" id="käsi-input"     value="ei_näy">
+  <input type="hidden" name="jakso"      id="jakso-input"    value="">
+  <input type="hidden" name="vuoropari"  id="vuoropari-input" value="">
+  <input type="hidden" name="tilanne"    id="tilanne-input"  value="">
+  <div id="väri-inputs"></div>
+
+  <!-- ══ PÄÄKYSYMYS ══ -->
+  <div class="card">
+    <div class="card-title">Lähteekö etenijä?</div>
+    <div style="display:flex;gap:10px;">
+      <button type="button" class="iso-btn iso-btn-meni" id="btn-meni"
+              onclick="valitseMeni('meni')">✅ MENI</button>
+      <button type="button" class="iso-btn iso-btn-ei" id="btn-ei"
+              onclick="valitseMeni('pois')">❌ EI MENNYT</button>
+    </div>
+  </div>
+
+  <!-- ══ KUVAUS ══ -->
+  <div class="card">
+    <div class="card-title">Mitä näit? <span class="muted" style="font-weight:400;">(vapaa kuvaus)</span></div>
+    <textarea name="kuvaus" id="kuvaus-input" rows="3"
+              placeholder="esim. viuhka menopesän puolella ylhäällä, peukalo kentälle päin, vapaa käsi rinnan edessä"
+              style="font-size:.95rem;"></textarea>
+  </div>
+
+  <!-- ══ TARKEMMAT TIEDOT (valinnainen) ══ -->
+  <div class="card">
+    <details>
+      <summary>▸ Tarkempi tulos, tilanne ja värit (valinnainen)</summary>
+      <div style="margin-top:14px;">
+
+        <!-- Tarkempi tulos -->
+        <div class="card-title">Tarkempi tulos</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+          {% for koodi, selitys in tulokset.items() %}
+          <button type="button" class="valinta-btn tulos-btn"
+                  onclick="valitseTulos('{{ koodi }}')">
+            {% if koodi == 'meni' %}✅ meni (epäselvä)
+            {% elif koodi == 'lento' %}✈ lento
+            {% elif koodi == 'sikalento' %}🚀 sikalento
+            {% elif koodi == 'väärät_pois' %}⛔ väärät pois
+            {% elif koodi == 'nopea_väärä' %}⚡ nopea väärä
+            {% elif koodi == 'iso_väärä' %}🛑 iso väärä
+            {% elif koodi == 'pois' %}❌ pois
+            {% else %}❓ epäselvä{% endif %}
+          </button>
+          {% endfor %}
+        </div>
+
+        <hr>
+
+        <!-- Jakso, Vuoropari, Tilanne, Lyöjä, Etenijät -->
+        <div class="card-title" style="margin-top:12px;">Ottelutilanne</div>
+
+        <label>Jakso</label>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          {% for j in [1,2] %}
+          <button type="button" class="valinta-btn jakso-btn" style="flex:1;"
+                  onclick="valitseJakso({{ j }})">{{ j }}. jakso</button>
+          {% endfor %}
+        </div>
+
+        <label>Vuoropari</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          {% for vp in [1,2,3,4,5] %}
+          <button type="button" class="valinta-btn vuoropari-btn" style="flex:1;min-width:40px;"
+                  onclick="valitseVuoropari({{ vp }})">{{ vp }}</button>
+          {% endfor %}
+        </div>
+
+        <label>Tilanne</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
+          {% for t in tilanteet %}
+          <button type="button" class="valinta-btn tilanne-btn"
+                  onclick="valitseTilanne('{{ t }}')">{{ t }}</button>
+          {% endfor %}
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+          <div>
+            <label>Lyöjä</label>
+            <input type="text" name="lyoja" placeholder="nimi/nro" style="font-size:.9rem;">
+          </div>
+          <div>
+            <label>Etenijä 1. pesällä</label>
+            <input type="text" name="etenija_1" placeholder="nimi/nro" style="font-size:.9rem;">
+          </div>
+          <div>
+            <label>Etenijä 2. pesällä</label>
+            <input type="text" name="etenija_2" placeholder="nimi/nro" style="font-size:.9rem;">
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label>Etenijä 3. pesällä</label>
+          <input type="text" name="etenija_3" placeholder="nimi/nro" style="font-size:.9rem;">
+        </div>
+
+        <hr>
+
+        <!-- Tilanne -->
+        <div class="card-title" style="margin-top:12px;">Syöttötilanne</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label>Vuoro</label>
+            {% for v in range(1,10) %}
+            <input type="radio" name="vuoro" value="{{ v }}" id="vuoro{{ v }}" style="display:none;" {% if v==1 %}checked{% endif %}>
+            {% endfor %}
+            <div style="display:flex;flex-wrap:wrap;gap:5px;">
+              {% for v in range(1,10) %}
+              <button type="button" class="number-btn {% if v==1 %}valittu{% endif %}"
+                      style="flex:0 0 calc(33% - 4px);padding:8px;font-size:.9rem;"
+                      onclick="valitseVuoro({{ v }})">{{ v }}</button>
+              {% endfor %}
+            </div>
+          </div>
+          <div>
+            <label>Palloja</label>
+            <div style="display:flex;gap:8px;">
+              {% for p in [0,1,2] %}
+              <button type="button" class="number-btn {% if p==0 %}valittu{% endif %}"
+                      onclick="valitsePallot({{ p }})">{{ p }}</button>
+              <input type="radio" name="pallot" value="{{ p }}" id="pallot{{ p }}" style="display:none;" {% if p==0 %}checked{% endif %}>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <label>Etenijät pesillä</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          {% for e in ['ei','1','2','3','12','13','23','123'] %}
+          <button type="button" class="valinta-btn {% if e=='ei' %}valittu{% endif %}"
+                  style="flex:0 0 auto;min-width:44px;"
+                  onclick="valitseEtenijat('{{ e }}')">{% if e=='ei' %}–{% else %}{{ e }}{% endif %}</button>
+          {% endfor %}
+        </div>
+
+        <hr>
+
+        <!-- Värit -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px;">
+          <div class="card-title" style="margin:0;">Viuhkan värit</div>
+          <button type="button" class="btn btn-ghost" style="padding:4px 8px;font-size:.75rem;"
+                  onclick="tyhjennäVärit()">Tyhjennä</button>
+        </div>
+        <div class="väri-grid">
+          {% set vt={'punainen':'#e84545','sininen':'#4588e8','vihreä':'#4fcf7a','keltainen':'#f7e14f',
+            'oranssi':'#f7a34f','musta':'#2a2e45','valkoinen':'#e8eaf0','violetti':'#9b59b6',
+            'ruskea':'#8B6914','harmaa':'#7c8099'} %}
+          {% for v in värit %}
+          <div class="väri-btn" id="vbtn-{{ v }}" style="background:{{ vt.get(v,'#555') }};"
+               onclick="napautaVäri('{{ v }}')">
+            {{ v[:3].upper() }}<span class="järjestys" id="jnro-{{ v }}"></span>
+          </div>
+          {% endfor %}
+        </div>
+        <div id="väri-järjestys" style="display:flex;gap:6px;flex-wrap:wrap;min-height:24px;margin-bottom:12px;">
+          <span class="muted" id="väri-placeholder" style="font-size:.8rem;">Ei värejä</span>
+        </div>
+
+        <hr>
+
+        <!-- Käsi -->
+        <div class="card-title" style="margin-top:12px;">Vapaan käden asento</div>
+        <div class="käsi-grid" style="margin-bottom:12px;">
+          {% for asento in käsien_asennot %}
+          <button type="button" class="valinta-btn {% if asento=='ei_näy' %}valittu{% endif %}"
+                  onclick="valitseKäsi('{{ asento }}')">
+            {% if asento=='auki' %}✋ auki{% elif asento=='nyrkki' %}✊ nyrkki
+            {% elif asento=='taskussa' %}🤜 taskussa{% elif asento=='lanteilla' %}🤚 lanteilla
+            {% elif asento=='viuhkassa' %}🌀 viuhkassa{% else %}👁 ei näy{% endif %}
+          </button>
+          {% endfor %}
+        </div>
+
+        <!-- Huomio -->
+        <label>Lisähuomio</label>
+        <textarea name="huomio" rows="1" placeholder="valinnainen..."></textarea>
+      </div>
+    </details>
+  </div>
+
+  <button type="submit" class="btn btn-success btn-full btn-lg" style="margin-bottom:24px;">
+    ✅ Tallenna havainto
+  </button>
+</form>
+
+<script>
+// ── Video ────────────────────────────────────────────────────
+let syottoTs=null, lahtoTs=null;
+
+function toggleVideo(){
+  const el=document.getElementById('video-osio');
+  el.style.display=el.style.display==='none'?'':'none';
+}
+function lataaVideo(inp){
+  if(!inp.files[0])return;
+  document.getElementById('video-player').src=URL.createObjectURL(inp.files[0]);
+  document.getElementById('video-wrap').style.display='';
+  document.getElementById('frame-btns').style.display='flex';
+  document.getElementById('merkki-napit').style.display='flex';
+  nollaaVideo();
+}
+function askellaVideo(d){const v=document.getElementById('video-player');v.currentTime=Math.max(0,v.currentTime+d);}
+function togglePlay(){const v=document.getElementById('video-player');v.paused?v.play():v.pause();}
+
+function merkitseSyotto(){
+  const v=document.getElementById('video-player'); v.pause();
+  syottoTs=v.currentTime;
+  const b=document.getElementById('btn-syotto');
+  b.textContent=`✅ Syöttö: ${syottoTs.toFixed(2)}s`; b.classList.add('merkitty');
+  laskeEhdotus();
+}
+function meritseLahto(){
+  const v=document.getElementById('video-player'); v.pause();
+  lahtoTs=v.currentTime;
+  const b=document.getElementById('btn-lahto');
+  b.textContent=`✅ Lähtö: ${lahtoTs.toFixed(2)}s`; b.classList.add('merkitty');
+  laskeEhdotus();
+}
+function laskeEhdotus(){
+  if(syottoTs===null||lahtoTs===null)return;
+  const ms=Math.round((lahtoTs-syottoTs)*1000);
+  document.getElementById('syotto-aika-input').value=ms;
+  document.getElementById('nollaa-btn').style.display='';
+  let tulos,teksti,vari;
+  if(ms<0){tulos='epäselvä';teksti='Lähtö ennen syöttöä — tarkista';vari='#7c8099';}
+  else if(ms<=LENTO_MAX){tulos='lento';teksti=`${ms}ms → ✈ LENTO`;vari='#4fcf7a';}
+  else if(ms<=NOPEA_MAX){tulos='nopea_väärä';teksti=`${ms}ms → ⚡ NOPEA VÄÄRÄ`;vari='#f7e14f';}
+  else if(ms<=VAARAT_MAX){tulos='väärät_pois';teksti=`${ms}ms → ⛔ VÄÄRÄT POIS`;vari='#f7a34f';}
+  else{tulos='pois';teksti=`${ms}ms → ❌ EI MENNYT`;vari='#f75757';}
+  const s=document.getElementById('ehdotus-strip');
+  s.style.display=''; s.style.background=vari;
+  s.style.color=(vari==='#f7e14f')?'#0f1117':'#fff'; s.textContent=teksti;
+  document.getElementById('delta-teksti').textContent=
+    `(lento<${LENTO_MAX}ms · nopea<${NOPEA_MAX}ms · väärät<${VAARAT_MAX}ms)`;
+  // Valitse sekä iso nappi että tarkempi tulos
+  if(tulos==='pois') valitseMeni('pois');
+  else { valitseMeni('meni'); valitseTulos(tulos); }
+}
+function nollaaVideo(){
+  syottoTs=null; lahtoTs=null;
+  document.getElementById('btn-syotto').textContent='1️⃣ Syöttö nousee';
+  document.getElementById('btn-syotto').classList.remove('merkitty');
+  document.getElementById('btn-lahto').textContent='2️⃣ Etenijä lähtee';
+  document.getElementById('btn-lahto').classList.remove('merkitty');
+  document.getElementById('ehdotus-strip').style.display='none';
+  document.getElementById('delta-teksti').textContent='';
+  document.getElementById('syotto-aika-input').value='';
+  document.getElementById('nollaa-btn').style.display='none';
+}
+
+// ── MENI / EI MENNYT ─────────────────────────────────────────
+function valitseMeni(val){
+  document.getElementById('tulos-input').value=val;
+  document.getElementById('btn-meni').classList.toggle('valittu', val!=='pois');
+  document.getElementById('btn-ei').classList.toggle('valittu',  val==='pois');
+  // Synkronoi myös tarkempi tulos
+  document.querySelectorAll('.tulos-btn').forEach(b=>b.classList.remove('valittu'));
+}
+
+// ── Tarkempi tulos ───────────────────────────────────────────
+function valitseTulos(t){
+  document.getElementById('tulos-input').value=t;
+  document.querySelectorAll('.tulos-btn').forEach(b=>{
+    b.classList.toggle('valittu', b.getAttribute('onclick')===`valitseTulos('${t}')`);
+  });
+  // Päivitä iso nappi
+  const meniTulokset=['meni','lento','sikalento','väärät_pois','nopea_väärä','iso_väärä'];
+  document.getElementById('btn-meni').classList.toggle('valittu', meniTulokset.includes(t));
+  document.getElementById('btn-ei').classList.toggle('valittu',   t==='pois');
+}
+
+// ── Värit ────────────────────────────────────────────────────
+let valitutVärit=[];
+const vt={'punainen':'#e84545','sininen':'#4588e8','vihreä':'#4fcf7a','keltainen':'#f7e14f',
+  'oranssi':'#f7a34f','musta':'#2a2e45','valkoinen':'#e8eaf0','violetti':'#9b59b6','ruskea':'#8B6914','harmaa':'#7c8099'};
+
+function napautaVäri(v){
+  const i=valitutVärit.indexOf(v);
+  if(i===-1)valitutVärit.push(v); else valitutVärit.splice(i,1);
+  document.getElementById('vbtn-'+v).classList.toggle('valittu',valitutVärit.includes(v));
+  päivitäVärit();
+}
+function tyhjennäVärit(){
+  valitutVärit.forEach(v=>{document.getElementById('vbtn-'+v)?.classList.remove('valittu');});
+  valitutVärit=[];päivitäVärit();
+}
+function päivitäVärit(){
+  {{ värit|tojson }}.forEach(v=>{
+    const j=document.getElementById('jnro-'+v);
+    const i=valitutVärit.indexOf(v);
+    if(j)j.textContent=i>=0?(i+1):'';
+  });
+  const c=document.getElementById('väri-inputs');c.innerHTML='';
+  valitutVärit.forEach(v=>{const inp=document.createElement('input');
+    inp.type='hidden';inp.name='värit';inp.value=v;c.appendChild(inp);});
+  const jd=document.getElementById('väri-järjestys');
+  const ph=document.getElementById('väri-placeholder');
+  if(!valitutVärit.length){jd.innerHTML='';jd.appendChild(ph);ph.style.display='';}
+  else{
+    ph.style.display='none';jd.innerHTML='';
+    valitutVärit.forEach((v,i)=>{
+      if(i>0){const a=document.createElement('span');a.textContent='→';a.style.color='var(--muted)';jd.appendChild(a);}
+      const ch=document.createElement('span');ch.className='badge';
+      ch.style.background=vt[v]||'#555';
+      ch.style.color=(v==='valkoinen'||v==='keltainen')?'#000':'#fff';
+      ch.textContent=v;jd.appendChild(ch);
+    });
+  }
+}
+
+// ── Tilanne ──────────────────────────────────────────────────
+function valitseVuoro(v){
+  document.getElementById('vuoro'+v).checked=true;
+  document.querySelectorAll('#syotto-form .number-btn').forEach(b=>{
+    if(b.getAttribute('onclick')===`valitseVuoro(${v})`)b.classList.add('valittu');
+    else if(b.getAttribute('onclick')?.startsWith('valitseVuoro'))b.classList.remove('valittu');
+  });
+}
+function valitsePallot(p){
+  document.getElementById('pallot'+p).checked=true;
+  document.querySelectorAll('#syotto-form .number-btn').forEach(b=>{
+    if(b.getAttribute('onclick')===`valitsePallot(${p})`)b.classList.add('valittu');
+    else if(b.getAttribute('onclick')?.startsWith('valitsePallot'))b.classList.remove('valittu');
+  });
+}
+function valitseEtenijat(e){
+  document.getElementById('etenijat-input').value=e;
+  document.querySelectorAll('#syotto-form .valinta-btn').forEach(b=>{
+    if(b.getAttribute('onclick')===`valitseEtenijat('${e}')`)b.classList.add('valittu');
+    else if(b.getAttribute('onclick')?.startsWith('valitseEtenijat'))b.classList.remove('valittu');
+  });
+}
+function valitseKäsi(a){
+  document.getElementById('käsi-input').value=a;
+  document.querySelectorAll('#syotto-form .valinta-btn').forEach(b=>{
+    if(b.getAttribute('onclick')===`valitseKäsi('${a}')`)b.classList.add('valittu');
+    else if(b.getAttribute('onclick')?.startsWith('valitseKäsi'))b.classList.remove('valittu');
+  });
+}
+function valitseJakso(j){
+  document.getElementById('jakso-input').value=j;
+  document.querySelectorAll('.jakso-btn').forEach(b=>{
+    b.classList.toggle('valittu', b.getAttribute('onclick')===`valitseJakso(${j})`);
+  });
+}
+function valitseVuoropari(v){
+  document.getElementById('vuoropari-input').value=v;
+  document.querySelectorAll('.vuoropari-btn').forEach(b=>{
+    b.classList.toggle('valittu', b.getAttribute('onclick')===`valitseVuoropari(${v})`);
+  });
+}
+function valitseTilanne(t){
+  document.getElementById('tilanne-input').value=t;
+  document.querySelectorAll('.tilanne-btn').forEach(b=>{
+    b.classList.toggle('valittu', b.getAttribute('onclick')===`valitseTilanne('${t}')`);
+  });
+}
+</script>
+{% endblock %}

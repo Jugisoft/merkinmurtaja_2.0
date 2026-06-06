@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="text-align:center; padding: 32px 0 20px;">
+  <div style="font-size: 3rem;">🏟</div>
+  <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--accent); margin-top: 8px;">Merkinmurtaja</h1>
+  <p class="muted" style="margin-top: 4px;">Kirjaudu sisään jatkaaksesi</p>
+</div>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}{% for msg in messages %}
+    <div class="flash" style="background:var(--danger); color:#fff;">⚠️ {{ msg }}</div>
+  {% endfor %}{% endif %}
+{% endwith %}
+
+<div class="card">
+  <form method="POST" action="/kirjaudu">
+    <label>Nimesi</label>
+    <input type="text" name="nimi" placeholder="esim. Matti"
+           autocomplete="name" autofocus style="font-size:1.1rem;">
+
+    {% if vaatii_koodin %}
+    <label style="margin-top:4px;">Tiimiläisten koodi</label>
+    <input type="password" name="koodi" placeholder="••••••" autocomplete="off">
+    {% else %}
+    <input type="hidden" name="koodi" value="">
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:4px;">
+      Tule mukaan →
+    </button>
+  </form>
+</div>
+{% endblock %}

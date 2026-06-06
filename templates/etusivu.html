@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="text-align:center; padding: 24px 0 16px;">
+  <div style="font-size: 3rem;">🏟</div>
+  <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--accent); margin-top: 8px;">Merkinmurtaja</h1>
+  <p class="muted" style="margin-top: 4px;">Selvitä vastustajan merkkikieli</p>
+</div>
+
+<!-- Uusi ottelu -->
+<div class="card">
+  <div class="card-title">➕ Uusi analysoitava ottelu</div>
+  <form method="POST" action="/ottelu/uusi">
+    <label>Vastustaja</label>
+    <input type="text" name="vastustaja" placeholder="esim. Sotkamon Jymy" autofocus>
+    <label>Päivämäärä</label>
+    <input type="text" name="pvm" placeholder="pp.kk.vvvv"
+           value="{{ now_pvm }}">
+    <label>Sarja</label>
+    <select name="sarja">
+      <option value="">— valitse —</option>
+      {% for s in ['MSU','Talvisuper','Divari','Harjoitusottelu'] %}
+      <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-primary btn-full btn-lg" type="submit">Aloita kirjaus</button>
+  </form>
+</div>
+
+<!-- Aiemmat ottelut -->
+{% if ottelut %}
+<div class="card">
+  <div class="card-title">📋 Aiemmat ottelut</div>
+  {% for o in ottelut %}
+  <div style="display:flex; align-items:center; justify-content:space-between;
+              padding: 10px 0; border-bottom: 1px solid #2a2e45;">
+    <div>
+      <div style="font-weight:600;">{{ o.nimi }}</div>
+      <div class="muted" style="font-size:0.8rem;">
+        {{ o.havainnot }} havaintoa
+        {% if o.vastustaja %} · {{ o.vastustaja }}{% endif %}
+        {% if o.sarja %} · {{ o.sarja }}{% endif %}
+      </div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="/ottelu/{{ o.id }}" class="btn btn-ghost">Syötä</a>
+      <a href="/ottelu/{{ o.id }}/analyysi" class="btn btn-warning">Analysoi</a>
+    </div>
+  </div>
+  {% endfor %}
+
+  {% if ottelut|length > 1 %}
+  <div style="margin-top: 12px;">
+    <a href="/analyysi/kaikki" class="btn btn-success btn-full">
+      🔍 Analysoi kaikki ottelut yhdistettynä
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="card" style="text-align:center; color:var(--muted); padding: 32px;">
+  Ei vielä otteluita. Aloita uusi ottelu yllä.
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block topbar_sub %}<div class="topbar-sub">{{ ottelu_nimi }}</div>{% endblock %}
+
+{% block topbar_actions %}
+{% if ottelu_id %}
+<a href="/ottelu/{{ ottelu_id }}" class="btn btn-ghost" style="padding:8px 12px; font-size:0.8rem;">← Syötä</a>
+{% endif %}
+<a href="/" class="btn btn-ghost" style="padding:8px 12px; font-size:0.8rem;">🏠</a>
+{% endblock %}
+
+{% block head %}
+<style>
+  .varmuus-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--surface2);
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .varmuus-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--success));
+    transition: width 0.6s ease;
+  }
+  .tulos-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+  .kuvio-rivi {
+    padding: 12px 0;
+    border-bottom: 1px solid #2a2e45;
+  }
+  .kuvio-rivi:last-child { border-bottom: none; }
+  .väri-chip {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    padding: 20px;
+    font-size: 0.85rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set n = yhteenveto.havainnot_yhteensä %}
+{% set ma = yhteenveto.meni_analyysi %}
+
+<!-- Otsikko -->
+<div style="text-align:center; padding: 16px 0 8px;">
+  <div style="font-size: 2rem;">🔍</div>
+  <h2 style="font-weight:800; margin-top:6px;">Analyysi</h2>
+  <p class="muted">{{ n }} havaintoa analysoitu</p>
+</div>
+
+{% if n == 0 %}
+<div class="card">
+  <div class="empty-state">
+    ⚠️ Ei havaintoja vielä.<br>Syötä havaintoja ensin!
+  </div>
+</div>
+{% else %}
+
+<!-- ── MENI / EI MENNYT ───────────────────────────────────── -->
+<div class="card">
+  <div class="section-header">📊 Meni vai ei?</div>
+  {% set meni_pct = ma.meni_pct %}
+  <div style="display:flex; gap:12px; margin-bottom:14px;">
+    <div style="flex:1; background:rgba(79,207,122,0.15); border-radius:10px; padding:14px; text-align:center;">
+      <div style="font-size:1.8rem; font-weight:800; color:var(--success);">{{ ma.meni }}</div>
+      <div class="muted" style="font-size:0.8rem;">✅ lähti</div>
+    </div>
+    <div style="flex:1; background:rgba(247,87,87,0.15); border-radius:10px; padding:14px; text-align:center;">
+      <div style="font-size:1.8rem; font-weight:800; color:var(--danger);">{{ ma.ei }}</div>
+      <div class="muted" style="font-size:0.8rem;">❌ ei lähtenyt</div>
+    </div>
+    {% if ma.epäselvä %}
+    <div style="flex:1; background:var(--surface2); border-radius:10px; padding:14px; text-align:center;">
+      <div style="font-size:1.8rem; font-weight:800; color:var(--muted);">{{ ma.epäselvä }}</div>
+      <div class="muted" style="font-size:0.8rem;">❓ epäselvä</div>
+    </div>
+    {% endif %}
+  </div>
+  {% if ma.meni + ma.ei > 0 %}
+  <div class="varmuus-bar" style="height:12px;">
+    <div style="height:100%; width:{{ meni_pct }}%; background:var(--success); border-radius:4px;"></div>
+  </div>
+  <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-top:4px;">
+    <span style="color:var(--success);">meni {{ meni_pct }}%</span>
+    <span style="color:var(--danger);">ei {{ 100 - meni_pct }}%</span>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── TEKSTIANALYYSI ─────────────────────────────────────── -->
+<div class="card">
+  <div class="section-header">💬 Tekstianalyysi</div>
+  <p class="muted" style="font-size:0.8rem; margin-bottom:12px;">
+    Mitkä sanat ja fraasit esiintyvät enemmän meni- kuin ei-kuvauksissa?
+    Lajiteltu erottelukyvyn mukaan.
+  </p>
+  {% set ta = yhteenveto.tekstianalyysi %}
+  {% if not ta %}
+  <div class="empty-state">Kirjoita kuvauksia havaintoihin — analyysi ilmestyy kun dataa on riittävästi.</div>
+  {% else %}
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+      <tr style="color:var(--muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em;">
+        <th style="text-align:left; padding:4px 8px 8px 0;">Sana / fraasi</th>
+        <th style="text-align:center; padding:4px 4px 8px;">meni%</th>
+        <th style="text-align:center; padding:4px 0 8px 4px;">n</th>
+        <th style="padding:4px 0 8px 8px; min-width:80px;"></th>
+      </tr>
+      {% for t in ta %}
+      {% set bar_meni  = (t.meni_maara / t.yhteensa * 100)|int %}
+      {% set bar_ei    = (t.ei_maara   / t.yhteensa * 100)|int %}
+      <tr style="border-top:1px solid #2a2e45;">
+        <td style="padding:7px 8px 7px 0; font-weight:600;">{{ t.termi }}</td>
+        <td style="text-align:center; padding:7px 4px;
+          color:{% if t.meni_pct >= 75 %}var(--success){% elif t.meni_pct <= 25 %}var(--danger){% else %}var(--warning){% endif %};
+          font-weight:700;">{{ t.meni_pct }}%</td>
+        <td style="text-align:center; padding:7px 0 7px 4px; color:var(--muted);">{{ t.yhteensa }}</td>
+        <td style="padding:7px 0 7px 8px;">
+          <div style="display:flex; height:8px; border-radius:4px; overflow:hidden; background:var(--surface2);">
+            <div style="width:{{ bar_meni }}%; background:var(--success);"></div>
+            <div style="width:{{ bar_ei }}%;   background:var(--danger);"></div>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── VÄRIKUVIOT ─────────────────────────────────────────── -->
+<div class="card">
+  <div class="section-header">🎨 Värikuviot → Tulos</div>
+  {% set kuviot = yhteenveto.vahvimmat_kuviot %}
+  {% if not kuviot %}
+  <div class="empty-state">Ei riittävästi dataa — kerää lisää havaintoja (väh. 2 per kuvio)</div>
+  {% else %}
+  {% for k in kuviot %}
+  <div class="kuvio-rivi">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <!-- Värichipit -->
+        {% set väri_tyylit = {
+          'punainen':'#e84545','sininen':'#4588e8','vihreä':'#4fcf7a',
+          'keltainen':'#f7e14f','oranssi':'#f7a34f','musta':'#2a2e45',
+          'valkoinen':'#e8eaf0','violetti':'#9b59b6','ruskea':'#8B6914','harmaa':'#7c8099'
+        } %}
+        {% for väri in k.kuvio.split('|') %}
+          {% if not loop.first %}<span style="color:var(--muted); margin: 0 2px;">→</span>{% endif %}
+          <span class="väri-chip"
+            style="background:{{ väri_tyylit.get(väri, '#555') }};
+                   color:{% if väri in ['valkoinen','keltainen'] %}#000{% else %}#fff{% endif %};">
+            {{ väri }}
+          </span>
+        {% endfor %}
+      </div>
+      <span class="badge badge-muted" style="white-space:nowrap; margin-left:8px;">n={{ k.määrä }}</span>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+      <!-- Tulos-pill -->
+      {% if k.tulos in ['lento','sikalento'] %}
+        <span class="tulos-pill" style="background:rgba(79,207,122,0.2); color:var(--success);">✈ {{ k.tulos }}</span>
+      {% elif k.tulos == 'pois' %}
+        <span class="tulos-pill" style="background:rgba(247,87,87,0.2); color:var(--danger);">❌ pois</span>
+      {% elif k.tulos == 'epäselvä' %}
+        <span class="tulos-pill" style="background:var(--surface2); color:var(--muted);">❓ epäselvä</span>
+      {% else %}
+        <span class="tulos-pill" style="background:rgba(247,225,79,0.2); color:var(--warning);">⚡ {{ k.tulos }}</span>
+      {% endif %}
+      <span style="font-size:0.85rem; font-weight:700; color:
+        {% if k.varmuus >= 85 %}var(--success)
+        {% elif k.varmuus >= 65 %}var(--warning)
+        {% else %}var(--danger){% endif %};">
+        {{ k.varmuus|round|int }}%
+      </span>
+    </div>
+
+    <!-- Varmuuspalkki -->
+    <div class="varmuus-bar">
+      <div class="varmuus-fill" style="width:{{ k.varmuus }}%;
+        background: {% if k.varmuus >= 85 %}var(--success){% elif k.varmuus >= 65 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+    </div>
+
+    <!-- Jakauma jos ei 100% -->
+    {% if k.varmuus < 100 %}
+    <div class="muted" style="margin-top:6px; font-size:0.78rem;">
+      {% for tulos, maara in k.jakauma.items()|sort(attribute='1', reverse=True) %}
+        {{ tulos }}: {{ maara }}{% if not loop.last %} · {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+
+<!-- ── KIELTOMERKIT ──────────────────────────────────────── -->
+<div class="card">
+  <div class="section-header">🚫 Epäillyt kieltomerkit</div>
+  <p class="muted" style="font-size:0.8rem; margin-bottom:10px;">Väri, jonka läsnäolo nollaa muut merkit → tulos lähes aina "pois"</p>
+  {% set kiellot = yhteenveto.epäillyt_kieltomerkit %}
+  {% if not kiellot %}
+  <div class="empty-state">Ei havaittu selkeitä kieltomerkkejä vielä</div>
+  {% else %}
+  {% for k in kiellot %}
+  <div style="display:flex; align-items:center; gap:10px; padding: 10px 0; border-bottom: 1px solid #2a2e45;">
+    {% set väri_tyylit = {
+      'punainen':'#e84545','sininen':'#4588e8','vihreä':'#4fcf7a',
+      'keltainen':'#f7e14f','oranssi':'#f7a34f','musta':'#2a2e45',
+      'valkoinen':'#e8eaf0','violetti':'#9b59b6','ruskea':'#8B6914','harmaa':'#7c8099'
+    } %}
+    <span class="väri-chip" style="font-size:0.9rem; padding:6px 14px;
+      background:{{ väri_tyylit.get(k.väri, '#555') }};
+      color:{% if k.väri in ['valkoinen','keltainen'] %}#000{% else %}#fff{% endif %};">
+      {{ k.väri }}
+    </span>
+    <div>
+      <div style="font-size:0.85rem; font-weight:600;">
+        pois {{ k['pois_värin_kanssa_%'] }}%
+        <span class="muted">(ilman {{ k['pois_ilman_%'] }}%)</span>
+      </div>
+      <div class="muted" style="font-size:0.78rem;">n={{ k.havainnot }} havaintoa</div>
+    </div>
+    <span class="badge badge-danger" style="margin-left:auto;">KIELTO</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+
+<!-- ── PIKAMERKIT ────────────────────────────────────────── -->
+<div class="card">
+  <div class="section-header">⚡ Epäillyt pikamerkit</div>
+  <p class="muted" style="font-size:0.8rem; margin-bottom:10px;">Käden asento joka korreloi vahvasti välittömään lentoon</p>
+  {% set pikamerkit = yhteenveto.epäillyt_pikamerkit %}
+  {% if not pikamerkit %}
+  <div class="empty-state">Ei havaittu selkeitä pikamerkkejä vielä</div>
+  {% else %}
+  {% for p in pikamerkit %}
+  <div style="display:flex; align-items:center; gap:10px; padding: 10px 0; border-bottom: 1px solid #2a2e45;">
+    <span class="badge badge-accent" style="font-size:0.9rem; padding:6px 14px;">{{ p.asento }}</span>
+    <div>
+      <div style="font-size:0.85rem; font-weight:600; color:var(--success);">lento {{ p['lento_%'] }}%</div>
+      <div class="muted" style="font-size:0.78rem;">n={{ p.havainnot }} havaintoa</div>
+    </div>
+    <span class="badge badge-success" style="margin-left:auto;">PIKAMERKKI</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+
+<!-- ── TILANNERIIPPUVAT ───────────────────────────────────── -->
+<div class="card">
+  <div class="section-header">📊 Tilanneriippuvat merkit</div>
+  <p class="muted" style="font-size:0.8rem; margin-bottom:10px;">Sama värikuvio → eri tulos eri pallomäärällä</p>
+  {% set tilanteet = yhteenveto.tilanneriippuvat %}
+  {% if not tilanteet %}
+  <div class="empty-state">Ei havaittu tilanneriippuvuutta vielä</div>
+  {% else %}
+  {% for kuvio, pallot_data in tilanteet.items() %}
+  <div style="padding: 10px 0; border-bottom: 1px solid #2a2e45;">
+    <div style="margin-bottom:8px;">
+      {% set väri_tyylit = {
+        'punainen':'#e84545','sininen':'#4588e8','vihreä':'#4fcf7a',
+        'keltainen':'#f7e14f','oranssi':'#f7a34f','musta':'#2a2e45',
+        'valkoinen':'#e8eaf0','violetti':'#9b59b6','ruskea':'#8B6914','harmaa':'#7c8099'
+      } %}
+      {% for väri in kuvio.split('|') %}
+        {% if not loop.first %}<span style="color:var(--muted);">→</span>{% endif %}
+        <span class="väri-chip"
+          style="background:{{ väri_tyylit.get(väri, '#555') }};
+                 color:{% if väri in ['valkoinen','keltainen'] %}#000{% else %}#fff{% endif %};">
+          {{ väri }}
+        </span>
+      {% endfor %}
+    </div>
+    {% for pallo, tulos in pallot_data.items()|sort %}
+    <div style="display:flex; gap:8px; margin-bottom:4px;">
+      <span class="badge badge-muted">{{ pallo }} pallo{{ 'a' if pallo != 1 else '' }}</span>
+      <span style="font-size:0.85rem;">→ <strong>{{ tulos }}</strong></span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+
+{% endif %} {# end if n > 0 #}
+
+{% endblock %}
