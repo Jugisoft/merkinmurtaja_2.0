@@ -225,6 +225,7 @@ let db;
 let kayttaja = localStorage.getItem('mm_kayttaja') || '';
 let currentOtteluId = null;
 let havainnot = [];
+let havantoRef = null;
 let havantoListener = null;
 let tulostila = 'epasela';
 let modalTulos = 'epasela';
@@ -287,10 +288,11 @@ function kirjauduUlos() {
   nayta('kirjaudu');
 }
 function irrota() {
-  if (havantoListener && currentOtteluId) {
-    db.ref('havainnot/'+currentOtteluId).off('value', havantoListener);
-    havantoListener = null;
+  if (havantoRef && havantoListener) {
+    havantoRef.off('value', havantoListener);
   }
+  havantoRef = null;
+  havantoListener = null;
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -317,11 +319,15 @@ function avaaOttelu(id, nimi) {
   document.getElementById('btn-ei').classList.remove('valittu');
   document.getElementById('kuvaus-input').value = '';
   nayta('syotto');
-  havantoListener = db.ref('havainnot/'+id).orderByKey().on('value', snap => {
+  havantoRef = db.ref('havainnot/'+id);
+  havantoListener = havantoRef.on('value', snap => {
     havainnot = [];
-    snap.forEach(c => havainnot.push({id:c.key,...c.val()}));
+    snap.forEach(c => {
+      const v = c.val();
+      if (v) havainnot.push({id: c.key, ...v});
+    });
     renderHavainnot();
-    document.getElementById('syotto-sub').textContent = havainnot.length+' havaintoa';
+    document.getElementById('syotto-sub').textContent = havainnot.length + ' havaintoa';
   });
 }
 
