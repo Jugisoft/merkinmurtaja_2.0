@@ -572,7 +572,7 @@ function avaaAnalyysiSuoraan(id, nimi) {
   document.getElementById('analyysi-content').innerHTML = '<div class="spinner">Ladataan...</div>';
   db.ref('havainnot/'+id).once('value', snap => {
     havainnot = [];
-    snap.forEach(c => havainnot.push({id:c.key,...c.val()}));
+    snap.forEach(c => havainnot.push({id:c.key, ottelu_nimi:nimi, ...c.val()}));
     renderAnalyysi();
   });
 }
@@ -584,9 +584,16 @@ function avaaAnalyysiKaikki() {
   document.getElementById('analyysi-back').onclick = naytaEtusivu;
   nayta('analyysi');
   document.getElementById('analyysi-content').innerHTML = '<div class="spinner">Ladataan...</div>';
-  db.ref('havainnot').once('value', snap => {
+  Promise.all([
+    db.ref('havainnot').once('value'),
+    db.ref('ottelut').once('value'),
+  ]).then(([havSnap, otSnap]) => {
+    const nimet = {};
+    otSnap.forEach(c => { nimet[c.key] = (c.val().nimi || c.key); });
     havainnot = [];
-    snap.forEach(ottelu => ottelu.forEach(c => havainnot.push({id:c.key,...c.val()})));
+    havSnap.forEach(ot => ot.forEach(c =>
+      havainnot.push({id:c.key, ottelu_id:ot.key, ottelu_nimi:nimet[ot.key]||ot.key, ...c.val()})
+    ));
     renderAnalyysi();
   });
 }
@@ -1038,6 +1045,33 @@ function renderAnalyysi() {
     <div class="card" style="text-align:center;color:var(--muted);padding:24px">
       <p style="font-size:.9rem">Kirjaa enemmän havaintoja molemmista ryhmistä (meni + ei mennyt) jotta tilastot toimivat.</p>
     </div>` : ''}
+
+    <div class="card">
+      <details open>
+        <summary style="font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.04em;font-size:.8rem;list-style:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+          <span>📋 Kaikki havainnot (${total})</span>
+        </summary>
+        <div style="margin-top:12px">
+          ${[...havainnot].reverse().map(h => {
+            const meni  = MENI_TULOKSET.has(h.tulos);
+            const cls   = meni ? 'badge-meni' : h.tulos === 'pois' ? 'badge-pois' : 'badge-muted';
+            const lbl   = meni ? '✅ meni' : h.tulos === 'pois' ? '❌ ei' : '❓';
+            const pos   = posStrH(h);
+            const lt    = lisatiedotStr(h);
+            const oNimi = h.ottelu_nimi ? `<span style="font-size:.72rem;background:rgba(79,142,247,.12);color:var(--accent);border-radius:4px;padding:1px 6px;margin-bottom:3px;display:inline-block">${esc(h.ottelu_nimi)}</span><br>` : '';
+            return `<div class="havainto-rivi">
+              <span class="badge ${cls}" style="margin-top:2px">${lbl}</span>
+              <span class="havainto-teksti">
+                ${oNimi}
+                ${pos ? `<span style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:2px">${pos}</span>` : ''}
+                ${lt  ? `<span style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:2px">${esc(lt)}</span>` : ''}
+                ${h.kuvaus ? esc(h.kuvaus) : '<span class="muted" style="font-size:.82rem">Ei tekstikuvausta</span>'}
+              </span>
+            </div>`;
+          }).join('')}
+        </div>
+      </details>
+    </div>
   `;
 }
 
