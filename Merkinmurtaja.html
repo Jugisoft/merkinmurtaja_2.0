@@ -170,10 +170,12 @@ th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
           <line x1="110" y1="150" x2="82" y2="215" stroke="#7c8099" stroke-width="2.5"/>
           <line x1="110" y1="150" x2="138" y2="215" stroke="#7c8099" stroke-width="2.5"/>
           <!-- viuhka arm (blue) -->
-          <line id="fa-line" x1="110" y1="72" x2="76" y2="120" stroke="#4f8ef7" stroke-width="5" stroke-linecap="round" opacity="0.25"/>
+          <line id="fa-line"  x1="110" y1="72" x2="76"  y2="120" stroke="#4f8ef7" stroke-width="5" stroke-linecap="round" opacity="0.25"/>
+          <line id="fa-line2" x1="0"   y1="0"  x2="0"   y2="0"   stroke="#4f8ef7" stroke-width="5" stroke-linecap="round" opacity="0"/>
           <circle id="fa-dot" cx="76" cy="120" r="0" fill="#4f8ef7"/>
           <!-- vapaa käsi arm (orange) -->
-          <line id="vk-line" x1="110" y1="72" x2="144" y2="120" stroke="#f7a34f" stroke-width="5" stroke-linecap="round" opacity="0.25"/>
+          <line id="vk-line"  x1="110" y1="72" x2="144" y2="120" stroke="#f7a34f" stroke-width="5" stroke-linecap="round" opacity="0.25"/>
+          <line id="vk-line2" x1="0"   y1="0"  x2="0"   y2="0"   stroke="#f7a34f" stroke-width="5" stroke-linecap="round" opacity="0"/>
           <circle id="vk-dot" cx="144" cy="120" r="0" fill="#f7a34f"/>
         </svg>
         <div style="font-size:.65rem;color:var(--muted);text-align:center;width:36px;line-height:1.3">2-<br>puoli</div>
@@ -195,9 +197,10 @@ th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
         </div>
         <div class="sub-lbl">Korkeus</div>
         <div class="pos-row">
-          <button class="pos-btn" data-g="fa-korkeus" data-v="ylos"  onclick="valitsePos('fa','korkeus','ylos')">Ylhäällä</button>
-          <button class="pos-btn" data-g="fa-korkeus" data-v="keski" onclick="valitsePos('fa','korkeus','keski')">Keski</button>
-          <button class="pos-btn" data-g="fa-korkeus" data-v="alas"  onclick="valitsePos('fa','korkeus','alas')">Alhaalla</button>
+          <button class="pos-btn" data-g="fa-korkeus" data-v="ylos"   onclick="valitsePos('fa','korkeus','ylos')">Ylhäällä</button>
+          <button class="pos-btn" data-g="fa-korkeus" data-v="keski"  onclick="valitsePos('fa','korkeus','keski')">Sivulla</button>
+          <button class="pos-btn" data-g="fa-korkeus" data-v="koukku" onclick="valitsePos('fa','korkeus','koukku')">Koukussa</button>
+          <button class="pos-btn" data-g="fa-korkeus" data-v="alas"   onclick="valitsePos('fa','korkeus','alas')">Alhaalla</button>
         </div>
         <div class="sub-lbl">Ote</div>
         <div class="pos-row">
@@ -218,14 +221,16 @@ th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
         </div>
         <div class="sub-lbl">Korkeus</div>
         <div class="pos-row">
-          <button class="pos-btn" data-g="vk-korkeus" data-v="ylos"  onclick="valitsePos('vk','korkeus','ylos')">Ylhäällä</button>
-          <button class="pos-btn" data-g="vk-korkeus" data-v="keski" onclick="valitsePos('vk','korkeus','keski')">Keski</button>
-          <button class="pos-btn" data-g="vk-korkeus" data-v="alas"  onclick="valitsePos('vk','korkeus','alas')">Alhaalla</button>
+          <button class="pos-btn" data-g="vk-korkeus" data-v="ylos"   onclick="valitsePos('vk','korkeus','ylos')">Ylhäällä</button>
+          <button class="pos-btn" data-g="vk-korkeus" data-v="keski"  onclick="valitsePos('vk','korkeus','keski')">Sivulla</button>
+          <button class="pos-btn" data-g="vk-korkeus" data-v="koukku" onclick="valitsePos('vk','korkeus','koukku')">Koukussa</button>
+          <button class="pos-btn" data-g="vk-korkeus" data-v="alas"   onclick="valitsePos('vk','korkeus','alas')">Alhaalla</button>
         </div>
         <div class="sub-lbl">Asento</div>
         <div class="pos-row">
-          <button class="pos-btn" data-g="vk-asento" data-v="auki"   onclick="valitsePos('vk','asento','auki')"><span style="color:#4fcf7a">●</span> Auki</button>
+          <button class="pos-btn" data-g="vk-asento" data-v="auki"    onclick="valitsePos('vk','asento','auki')"><span style="color:#4fcf7a">●</span> Auki</button>
           <button class="pos-btn" data-g="vk-asento" data-v="nyrkki" onclick="valitsePos('vk','asento','nyrkki')"><span style="color:#f75757">●</span> Nyrkki</button>
+          <button class="pos-btn" data-g="vk-asento" data-v="kiinni" onclick="valitsePos('vk','asento','kiinni')"><span style="color:#4f8ef7">●</span> Kiinni viuhkasta</button>
           <button class="pos-btn" data-g="vk-asento" data-v="ei_nay" onclick="valitsePos('vk','asento','ei_nay')">Ei näy</button>
         </div>
       </div>
@@ -312,23 +317,26 @@ let vapaaKasi  = {puoli:'', korkeus:'', asento:''};
 
 // SVG arm coordinates (shoulder junction at x=110, y=72 in viewBox 0 0 220 230)
 const ARM_ORIGIN = {x: 110, y: 72};
+// end = käden pää, elbow = kyynärpää (vain koukku-asennoille)
 const ARM_COORDS = {
-  lahto_ylos:   {x: 42, y: 28},
-  lahto_keski:  {x: 22, y: 72},
-  lahto_alas:   {x: 44, y: 118},
-  edessa_ylos:  {x: 110, y: 24},
-  edessa_keski: {x: 110, y: 62},
-  edessa_alas:  {x: 110, y: 120},
-  meno_ylos:    {x: 178, y: 28},
-  meno_keski:   {x: 198, y: 72},
-  meno_alas:    {x: 176, y: 118},
+  lahto_ylos:   {end:{x:42,  y:28}},
+  lahto_keski:  {end:{x:22,  y:72}},
+  lahto_koukku: {elbow:{x:54, y:104}, end:{x:80, y:68}},
+  lahto_alas:   {end:{x:44,  y:118}},
+  edessa_ylos:  {end:{x:110, y:24}},
+  edessa_keski: {end:{x:110, y:62}},
+  edessa_alas:  {end:{x:110, y:120}},
+  meno_ylos:    {end:{x:178, y:28}},
+  meno_keski:   {end:{x:198, y:72}},
+  meno_koukku:  {elbow:{x:166, y:104}, end:{x:140, y:68}},
+  meno_alas:    {end:{x:176, y:118}},
 };
 
 // Label maps
 const PL = {lahto:'3-puoli', edessa:'Edessä', meno:'2-puoli'};
-const KL = {ylos:'ylh.', keski:'keski', alas:'alh.'};
+const KL = {ylos:'ylh.', keski:'sivulla', koukku:'koukussa', alas:'alh.'};
 const OL = {rystyset:'rystyset', peukalo:'peukalo', ei_nay:'ei näy'};
-const AL = {auki:'auki', nyrkki:'nyrkki', ei_nay:'ei näy'};
+const AL = {auki:'auki', nyrkki:'nyrkki', kiinni:'kiinni viuhkasta', ei_nay:'ei näy'};
 
 // ── Init ───────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -491,29 +499,48 @@ function updateFigure() {
             '#4f8ef7', {rystyset:'#f75757', peukalo:'#f7e14f', ei_nay:null},
             {x:76, y:120});
   updateArm('vk', vapaaKasi.puoli, vapaaKasi.korkeus, vapaaKasi.asento,
-            '#f7a34f', {auki:'#4fcf7a', nyrkki:'#f75757', ei_nay:null},
+            '#f7a34f', {auki:'#4fcf7a', nyrkki:'#f75757', kiinni:'#4f8ef7', ei_nay:null},
             {x:144, y:120});
 }
 
 function updateArm(id, puoli, korkeus, grip, armColor, gripColors, dflt) {
-  const line = document.getElementById(id+'-line');
-  const dot  = document.getElementById(id+'-dot');
+  const line  = document.getElementById(id+'-line');
+  const line2 = document.getElementById(id+'-line2');
+  const dot   = document.getElementById(id+'-dot');
   if (!line || !dot) return;
 
-  const hasPos = puoli && korkeus;
-  const coords = hasPos ? (ARM_COORDS[puoli+'_'+korkeus] || dflt) : dflt;
+  const hasPos  = puoli && korkeus;
+  const coordData = hasPos ? ARM_COORDS[puoli+'_'+korkeus] : null;
+  const end   = coordData ? coordData.end   : dflt;
+  const elbow = coordData ? coordData.elbow : null;
 
+  // First segment: shoulder → elbow (if bent) or shoulder → end (if straight)
+  const seg1end = elbow || end;
   line.setAttribute('x1', ARM_ORIGIN.x);
   line.setAttribute('y1', ARM_ORIGIN.y);
-  line.setAttribute('x2', coords.x);
-  line.setAttribute('y2', coords.y);
+  line.setAttribute('x2', seg1end.x);
+  line.setAttribute('y2', seg1end.y);
   line.setAttribute('stroke', armColor);
   line.setAttribute('opacity', hasPos ? '1' : '0.22');
 
+  // Second segment: elbow → end (only for bent arm)
+  if (line2) {
+    if (elbow && hasPos) {
+      line2.setAttribute('x1', elbow.x);
+      line2.setAttribute('y1', elbow.y);
+      line2.setAttribute('x2', end.x);
+      line2.setAttribute('y2', end.y);
+      line2.setAttribute('stroke', armColor);
+      line2.setAttribute('opacity', '1');
+    } else {
+      line2.setAttribute('opacity', '0');
+    }
+  }
+
   if (hasPos) {
     const dotColor = gripColors[grip] || armColor;
-    dot.setAttribute('cx', coords.x);
-    dot.setAttribute('cy', coords.y);
+    dot.setAttribute('cx', end.x);
+    dot.setAttribute('cy', end.y);
     dot.setAttribute('r',  grip && grip !== 'ei_nay' ? '9' : '6');
     dot.setAttribute('fill', dotColor || armColor);
     dot.setAttribute('opacity', '1');
