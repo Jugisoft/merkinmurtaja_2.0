@@ -259,18 +259,24 @@ details[open]>summary::after{content:'▾'}
           </div>
           <div style="display:flex;gap:8px;margin-bottom:10px">
             <div style="flex:1">
-              <div class="sub-lbl">Pallot</div>
+              <div class="sub-lbl">Palot</div>
               <select id="lt-pallot">
                 <option value="">—</option>
-                <option value="0">0 palloa</option>
-                <option value="1">1 pallo</option>
-                <option value="2">2 palloa</option>
+                <option value="0">0 paloa</option>
+                <option value="1">1 palo</option>
+                <option value="2">2 paloa</option>
               </select>
             </div>
             <div style="flex:2">
               <div class="sub-lbl">Lyöjä</div>
               <input type="text" id="lt-lyoja" placeholder="nimi tai numero">
             </div>
+          </div>
+          <div class="sub-lbl">Monesko lyönti</div>
+          <div class="pos-row" style="margin-bottom:10px">
+            <button type="button" class="pos-btn" data-lyonti="1" onclick="toggleLyonti('1')">1. lyönti</button>
+            <button type="button" class="pos-btn" data-lyonti="2" onclick="toggleLyonti('2')">2. lyönti</button>
+            <button type="button" class="pos-btn" data-lyonti="3" onclick="toggleLyonti('3')">3. lyönti</button>
           </div>
           <div class="sub-lbl">Etenijät pesillä</div>
           <div class="pos-row" style="margin-bottom:10px">
@@ -375,6 +381,7 @@ let viuhka     = {puoli:'', korkeus:'', ote:''};
 let vapaaKasi  = {puoli:'', korkeus:'', asento:''};
 let ltEtenijat = [];
 let ltVarit    = [];
+let ltLyonti   = '';
 
 // SVG arm coordinates (shoulder junction at x=110, y=72 in viewBox 0 0 220 230)
 const ARM_ORIGIN = {x: 110, y: 72};
@@ -544,6 +551,11 @@ function avaaAnalyysiKaikki() {
 }
 
 // ── Lisätiedot toggles ─────────────────────────────────────────
+function toggleLyonti(n) {
+  ltLyonti = (ltLyonti === n) ? '' : n;
+  document.querySelectorAll('[data-lyonti]').forEach(b =>
+    b.classList.toggle('sel-fa', b.dataset.lyonti === ltLyonti));
+}
 function toggleEtenija(pesa) {
   const i = ltEtenijat.indexOf(pesa);
   if (i >= 0) ltEtenijat.splice(i, 1); else ltEtenijat.push(pesa);
@@ -650,6 +662,7 @@ function tallennaHavainto() {
     vuoropari:      document.getElementById('lt-vuoropari').value.trim(),
     pallot:         document.getElementById('lt-pallot').value,
     lyoja:          document.getElementById('lt-lyoja').value.trim(),
+    lyonti:         ltLyonti,
     etenijat:       ltEtenijat.join(','),
     varit:          ltVarit.join(','),
     luotu:          new Date().toISOString(),
@@ -667,6 +680,7 @@ function resetSyotto() {
   vapaaKasi  = {puoli:'', korkeus:'', asento:''};
   ltEtenijat = [];
   ltVarit    = [];
+  ltLyonti   = '';
   const bi = document.getElementById('btn-meni');
   const be = document.getElementById('btn-ei');
   const ki = document.getElementById('kuvaus-input');
@@ -684,7 +698,8 @@ function resetSyotto() {
 function lisatiedotStr(h) {
   const parts = [];
   if (h.jakso)                          parts.push('J'+h.jakso);
-  if (h.pallot !== undefined && h.pallot !== '') parts.push(h.pallot+'p');
+  if (h.pallot !== undefined && h.pallot !== '') parts.push(h.pallot+' paloa');
+  if (h.lyonti)                               parts.push(h.lyonti+'. lyönti');
   if (h.vuoropari)                      parts.push('pari '+h.vuoropari);
   if (h.lyoja)                          parts.push(h.lyoja);
   if (h.etenijat)                       parts.push(h.etenijat.split(',').filter(Boolean).map(p=>p+'-pesä').join('+'));
