@@ -593,39 +593,42 @@ function naytaKaikkiKirjaukset() {
     db.ref('ottelut').once('value'),
     db.ref('havainnot').once('value'),
   ]).then(([otSnap, havSnap]) => {
-    const ottelut = [];
-    otSnap.forEach(c => ottelut.unshift({id:c.key,...c.val()}));
-    ottelut.sort((a,b) => (b.luotu||'') < (a.luotu||'') ? -1 : 1);
+    // Build otteluMap keyed by Firebase ID
+    const otteluMap = {};
+    otSnap.forEach(c => { otteluMap[c.key] = {id:c.key,...c.val()}; });
 
+    // Load all observations grouped by havainnot key
     const perOttelu = {};
     let totalHav = 0;
-    const havaintoAvaimet = [];
     havSnap.forEach(ot => {
       perOttelu[ot.key] = [];
-      havaintoAvaimet.push(ot.key);
       ot.forEach(c => { perOttelu[ot.key].push({id:c.key,...c.val()}); totalHav++; });
+
+      // Auto-repair: if havainnot key has no matching ottelut entry, create one
+      if (!otteluMap[ot.key]) {
+        const firstHav  = perOttelu[ot.key][0] || {};
+        const nimiArv   = ot.key.replace(/_\d{13}$/, '').replace(/_/g, ' ');
+        const luotuArv  = firstHav.luotu || new Date().toISOString();
+        const uusiOttelu = {id:ot.key, nimi:nimiArv, vastustaja:'', sarja:'', luotu:luotuArv};
+        otteluMap[ot.key] = uusiOttelu;
+        db.ref('ottelut/'+ot.key).set({nimi:nimiArv, vastustaja:'', sarja:'', luotu:luotuArv});
+      }
     });
-    const otteluAvaimet = ottelut.map(o => o.id);
+
+    // Build sorted list from all known keys (union of ottelut + havainnot)
+    const ottelut = Object.values(otteluMap);
+    ottelut.sort((a,b) => (b.luotu||'') < (a.luotu||'') ? -1 : 1);
 
     document.getElementById('kaikki-sub').textContent =
       ottelut.length+' ottelua · '+totalHav+' havaintoa';
 
-    // DEBUG: näytä avaimet jos mismatch
-    const debugHtml = (havaintoAvaimet.length || otteluAvaimet.length) ? `
-      <div class="card" style="font-size:.72rem;color:var(--muted);word-break:break-all;margin-bottom:8px">
-        <div style="margin-bottom:4px"><b>ottelut/ avaimet:</b></div>
-        ${otteluAvaimet.map(k=>`<div style="padding:2px 0">${esc(k)}</div>`).join('')}
-        <div style="margin:6px 0 4px"><b>havainnot/ avaimet:</b></div>
-        ${havaintoAvaimet.map(k=>`<div style="padding:2px 0">${esc(k)}</div>`).join('')}
-      </div>` : '';
-
-    if (!ottelut.length) {
+    if (!ottelut.length && !totalHav) {
       document.getElementById('kaikki-content').innerHTML =
         '<div class="card" style="text-align:center;color:var(--muted);padding:32px">Ei vielä otteluita.</div>';
       return;
     }
 
-    document.getElementById('kaikki-content').innerHTML = debugHtml + ottelut.map(o => {
+    document.getElementById('kaikki-content').innerHTML = ottelut.map(o => {
       const havs      = perOttelu[o.id] || [];
       const meniCount = havs.filter(h => MENI_TULOKSET.has(h.tulos)).length;
       const poisCount = havs.filter(h => h.tulos === 'pois').length;
