@@ -243,24 +243,28 @@ details[open]>summary::after{content:'▾'}
       <details id="lisatiedot-wrap" style="margin-top:2px">
         <summary>Lisätiedot (valinnainen)</summary>
         <div style="padding:4px 0 8px">
-          <div style="display:flex;gap:8px;margin-bottom:8px">
-            <div style="flex:1">
-              <div class="sub-lbl">Jakso</div>
-              <select id="lt-jakso">
-                <option value="">—</option>
-                <option>1</option><option>2</option><option>K</option>
-              </select>
+          <div style="margin-bottom:8px">
+            <div class="sub-lbl">Jakso</div>
+            <div class="pos-row" style="margin-top:2px">
+              <button type="button" class="pos-btn" data-jakso="1" onclick="toggleJakso('1')">1</button>
+              <button type="button" class="pos-btn" data-jakso="2" onclick="toggleJakso('2')">2</button>
+              <button type="button" class="pos-btn" data-jakso="K" onclick="toggleJakso('K')">K</button>
             </div>
-            <div style="flex:1">
-              <div class="sub-lbl">Vuoropari</div>
-              <select id="lt-vuoropari">
-                <option value="">—</option>
-                <option>1A</option><option>1L</option>
-                <option>2A</option><option>2L</option>
-                <option>3A</option><option>3L</option>
-                <option>4A</option><option>4L</option>
-                <option>K</option>
-              </select>
+          </div>
+          <div style="margin-bottom:8px">
+            <div class="sub-lbl">Vuoropari</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:2px">
+              <button type="button" class="pos-btn" style="flex:none" data-vp="1A" onclick="toggleVuoropari('1A')">1A</button>
+              <button type="button" class="pos-btn" style="flex:none" data-vp="2A" onclick="toggleVuoropari('2A')">2A</button>
+              <button type="button" class="pos-btn" style="flex:none" data-vp="3A" onclick="toggleVuoropari('3A')">3A</button>
+              <button type="button" class="pos-btn" style="flex:none" data-vp="4A" onclick="toggleVuoropari('4A')">4A</button>
+              <button type="button" class="pos-btn" style="flex:none" data-vp="1L" onclick="toggleVuoropari('1L')">1L</button>
+              <button type="button" class="pos-btn" style="flex:none" data-vp="2L" onclick="toggleVuoropari('2L')">2L</button>
+              <button type="button" class="pos-btn" style="flex:none" data-vp="3L" onclick="toggleVuoropari('3L')">3L</button>
+              <button type="button" class="pos-btn" style="flex:none" data-vp="4L" onclick="toggleVuoropari('4L')">4L</button>
+            </div>
+            <div style="margin-top:4px">
+              <button type="button" class="pos-btn btn-full" data-vp="K" onclick="toggleVuoropari('K')">K</button>
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-bottom:10px">
@@ -402,6 +406,8 @@ let ltEtenijat = [];
 let ltVarit    = [];
 let ltLyonti   = '';
 let ltLyoja    = '';
+let ltJakso    = '';
+let ltVuoropari = '';
 
 // SVG arm coordinates (shoulder junction at x=110, y=72 in viewBox 0 0 220 230)
 const ARM_ORIGIN = {x: 110, y: 72};
@@ -439,7 +445,13 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('uusi-pvm').value = tanaanPvm();
   if (TIIMI_KOODI) document.getElementById('koodi-rivi').style.display = '';
   document.getElementById('k-nimi').addEventListener('keydown', ev => { if(ev.key==='Enter') kirjauduSisaan(); });
-  kayttaja ? naytaEtusivu() : nayta('kirjaudu');
+  if (kayttaja) {
+    const savedId   = localStorage.getItem('mm_ottelu_id');
+    const savedNimi = localStorage.getItem('mm_ottelu_nimi');
+    savedId ? avaaOttelu(savedId, savedNimi || savedId) : naytaEtusivu();
+  } else {
+    nayta('kirjaudu');
+  }
 });
 
 // ── Näkymät ────────────────────────────────────────────────────
@@ -449,6 +461,8 @@ function nayta(id) {
   window.scrollTo(0,0);
 }
 function naytaEtusivu() {
+  localStorage.removeItem('mm_ottelu_id');
+  localStorage.removeItem('mm_ottelu_nimi');
   nayta('etusivu');
   document.getElementById('topbar-kayttaja').textContent = kayttaja;
   lataaOttelut();
@@ -500,11 +514,11 @@ function avaaOttelu(id, nimi) {
   havainnot = [];
   // Täysi nollaus uuden ottelun aluksi (myös pysyvät kentät)
   ltEtenijat = []; ltVarit = []; ltLyonti = ''; ltLyoja = '';
-  const jk = document.getElementById('lt-jakso');
-  const vp = document.getElementById('lt-vuoropari');
-  if (jk) jk.value = '';
-  if (vp) vp.value = '';
-  document.querySelectorAll('[data-et],[data-lyoja]').forEach(b => b.classList.remove('sel-fa','sel-vk'));
+  ltJakso = ''; ltVuoropari = '';
+  document.querySelectorAll('[data-et],[data-lyoja],[data-jakso],[data-vp]').forEach(b =>
+    b.classList.remove('sel-fa','sel-vk'));
+  localStorage.setItem('mm_ottelu_id',   id);
+  localStorage.setItem('mm_ottelu_nimi', nimi);
   resetSyotto();
   document.getElementById('syotto-otsikko').textContent = nimi;
   document.getElementById('syotto-sub').textContent = 'Ladataan...';
@@ -578,6 +592,16 @@ function avaaAnalyysiKaikki() {
 }
 
 // ── Lisätiedot toggles ─────────────────────────────────────────
+function toggleJakso(v) {
+  ltJakso = (ltJakso === v) ? '' : v;
+  document.querySelectorAll('[data-jakso]').forEach(b =>
+    b.classList.toggle('sel-fa', b.dataset.jakso === ltJakso));
+}
+function toggleVuoropari(v) {
+  ltVuoropari = (ltVuoropari === v) ? '' : v;
+  document.querySelectorAll('[data-vp]').forEach(b =>
+    b.classList.toggle('sel-fa', b.dataset.vp === ltVuoropari));
+}
 function toggleLyoja(n) {
   ltLyoja = (ltLyoja === n) ? '' : n;
   document.querySelectorAll('[data-lyoja]').forEach(b =>
@@ -690,8 +714,8 @@ function tallennaHavainto() {
     vapaa_puoli:    vapaaKasi.puoli,
     vapaa_korkeus:  vapaaKasi.korkeus,
     vapaa_asento:   vapaaKasi.asento,
-    jakso:          document.getElementById('lt-jakso').value,
-    vuoropari:      document.getElementById('lt-vuoropari').value.trim(),
+    jakso:          ltJakso,
+    vuoropari:      ltVuoropari,
     pallot:         document.getElementById('lt-pallot').value,
     lyoja:          ltLyoja,
     lyonti:         ltLyonti,
