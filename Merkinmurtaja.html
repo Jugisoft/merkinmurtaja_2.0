@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Merkinmurtaja</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--accent:#4f8ef7;--accent2:#f7a34f;
+  --success:#4fcf7a;--danger:#f75757;--warning:#f7e14f;--muted:#7c8099;--text:#e8eaf0;--border:#2a2e45}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:32px}
+.view{display:none}.view.active{display:block}
+.topbar{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);
+  padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.topbar-title{font-weight:800;font-size:1rem;color:var(--accent)}
+.topbar-sub{font-size:.8rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
+.content{padding:12px}
+.card{background:var(--surface);border-radius:12px;padding:16px;margin-bottom:12px}
+.card-title{font-weight:700;color:var(--accent2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;font-size:.8rem}
+label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px;margin-top:10px}
+label:first-child{margin-top:0}
+input[type=text],input[type=password],select,textarea{width:100%;background:var(--surface2);
+  border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:.95rem;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+select option{background:var(--surface2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;
+  border:1px solid var(--border);background:var(--surface2);color:var(--text);
+  font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#0f1117}
+.btn-success{background:var(--success);border-color:var(--success);color:#0f1117}
+.btn-danger{background:rgba(247,87,87,.15);border-color:var(--danger);color:var(--danger)}
+.btn-warning{background:rgba(247,227,79,.1);border-color:var(--warning);color:var(--warning)}
+.btn-ghost{background:transparent;border-color:var(--border)}
+.btn-full{width:100%}
+.btn-lg{padding:14px;font-size:1rem}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.75rem;font-weight:700}
+.badge-success{background:rgba(79,207,122,.2);color:var(--success)}
+.badge-danger{background:rgba(247,87,87,.2);color:var(--danger)}
+.badge-muted{background:rgba(124,128,153,.2);color:var(--muted)}
+.muted{color:var(--muted)}
+hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+.valinta-btn{padding:10px 8px;border-radius:8px;border:2px solid var(--border);background:var(--surface2);
+  color:var(--text);cursor:pointer;text-align:center;font-size:.82rem;font-weight:600;transition:border-color .1s}
+.valinta-btn.valittu{border-color:var(--accent);background:rgba(79,142,247,.15);color:var(--accent)}
+.number-btn{flex:1;padding:12px;border-radius:8px;border:2px solid var(--border);background:var(--surface2);
+  color:var(--text);font-size:1.1rem;font-weight:700;cursor:pointer;text-align:center}
+.number-btn.valittu{border-color:var(--accent2);background:rgba(247,163,79,.15);color:var(--accent2)}
+.iso-btn{width:100%;padding:20px;border-radius:12px;border:3px solid var(--border);
+  font-size:1.2rem;font-weight:800;cursor:pointer;transition:all .15s;text-align:center;background:transparent}
+.iso-btn-meni{color:var(--success)}
+.iso-btn-meni.valittu{background:var(--success);color:#0f1117;border-color:var(--success)}
+.iso-btn-ei{color:var(--danger)}
+.iso-btn-ei.valittu{background:var(--danger);color:#fff;border-color:var(--danger)}
+.väri-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.väri-btn{aspect-ratio:1;border-radius:10px;border:3px solid transparent;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
+  color:rgba(0,0,0,.7);transition:transform .1s,border-color .1s;position:relative}
+.väri-btn.valittu{border-color:#fff;transform:scale(1.08);box-shadow:0 0 12px rgba(255,255,255,.3)}
+.väri-btn .jnro{position:absolute;top:3px;right:5px;font-size:.7rem;font-weight:800;color:rgba(0,0,0,.8)}
+.viimeisin-lista{max-height:200px;overflow-y:auto}
+.havainto-rivi{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.merkki-btn{flex:1;min-width:140px;padding:12px 8px;border-radius:8px;border:2px solid var(--border);
+  background:var(--surface2);color:var(--text);cursor:pointer;font-size:.85rem;font-weight:700;
+  text-align:center;transition:border-color .15s,background .15s}
+.merkki-btn.merkitty{border-color:var(--accent);background:rgba(79,142,247,.15);color:var(--accent)}
+.ehdotus-strip{padding:10px 14px;border-radius:8px;font-weight:700;font-size:.9rem;
+  text-align:center;display:none;margin-bottom:8px}
+.frame-btns{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
+.frame-btn{padding:6px 14px;border-radius:6px;background:var(--surface2);
+  border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:.82rem}
+details>summary{cursor:pointer;color:var(--muted);font-size:.85rem;padding:4px 0;list-style:none}
+details>summary::-webkit-details-marker{display:none}
+details[open]>summary{color:var(--accent)}
+.flash{padding:10px 14px;border-radius:8px;margin-top:10px;font-size:.9rem;font-weight:600}
+.flash-ok{background:rgba(79,207,122,.15);color:var(--success);border:1px solid var(--success)}
+.flash-err{background:rgba(247,87,87,.15);color:var(--danger);border:1px solid var(--danger)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)}
+th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
+.bar{height:8px;border-radius:4px}
+.spinner{text-align:center;padding:40px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ══ KIRJAUDU ══════════════════════════════════════════════════ -->
+<div id="view-kirjaudu" class="view active">
+  <div style="text-align:center;padding:60px 24px 24px">
+    <div style="font-size:3rem">🏟</div>
+    <h1 style="font-size:1.5rem;font-weight:800;color:var(--accent);margin-top:8px">Merkinmurtaja</h1>
+    <p class="muted" style="margin-top:4px">Selvitä vastustajan merkkikieli</p>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div id="kirjaudu-flash"></div>
+      <label>Nimesi</label>
+      <input type="text" id="k-nimi" placeholder="esim. Pekka" autocomplete="given-name">
+      <div id="koodi-rivi" style="display:none">
+        <label>Tiimiläisten koodi</label>
+        <input type="password" id="k-koodi" placeholder="••••••">
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" style="margin-top:16px" onclick="kirjauduSisaan()">Kirjaudu →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ETUSIVU ════════════════════════════════════════════════════ -->
+<div id="view-etusivu" class="view">
+  <div class="topbar">
+    <span class="topbar-title">🏟 Merkinmurtaja</span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="btn btn-ghost" style="padding:6px 10px;font-size:.75rem" onclick="naytaAsetukset()">⚙️</button>
+      <span id="topbar-kayttaja" class="muted" style="font-size:.8rem"></span>
+      <button class="btn btn-ghost" style="padding:4px 8px;font-size:.75rem" onclick="kirjauduUlos()">✕</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-title">➕ Uusi analysoitava ottelu</div>
+      <label>Vastustaja</label>
+      <input type="text" id="uusi-vastustaja" placeholder="esim. Sotkamon Jymy">
+      <label>Päivämäärä</label>
+      <input type="text" id="uusi-pvm">
+      <label>Sarja</label>
+      <select id="uusi-sarja">
+        <option value="">— valitse —</option>
+        <option>MSU</option><option>Talvisuper</option><option>Divari</option><option>Harjoitusottelu</option>
+      </select>
+      <button class="btn btn-primary btn-full btn-lg" style="margin-top:12px" onclick="luoOttelu()">Aloita kirjaus</button>
+    </div>
+    <div id="ottelut-lista"></div>
+  </div>
+</div>
+
+<!-- ══ SYÖTTÖ ═════════════════════════════════════════════════════ -->
+<div id="view-syotto" class="view">
+  <div class="topbar">
+    <div style="overflow:hidden">
+      <div class="topbar-title" id="syotto-otsikko">Ottelu</div>
+      <div class="topbar-sub" id="syotto-sub">0 havaintoa</div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-warning" style="padding:6px 10px;font-size:.75rem" onclick="naytaAnalyysi()">📊</button>
+      <button class="btn btn-ghost" style="padding:6px 10px;font-size:.75rem" onclick="naytaEtusivu()">← Koti</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- Viimeisimmät -->
+    <div class="card" id="viimeiset-card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="card-title" style="margin:0" id="viimeiset-otsikko">Viimeisimmät</div>
+        <button class="btn btn-danger" style="padding:5px 10px;font-size:.75rem" onclick="poistaViimeisin()">↩ Poista viimeisin</button>
+      </div>
+      <div class="viimeisin-lista" id="viimeiset-lista"></div>
+    </div>
+
+    <!-- Videotyökalu -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="card-title" style="margin:0">🎬 Videotyökalu</div>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:.75rem" onclick="toggleVideo()">Näytä / piilota</button>
+      </div>
+      <div id="video-osio" style="display:none">
+        <p class="muted" style="font-size:.8rem;margin-bottom:10px">Avaa video → merkitse syöttö → merkitse lähtö → ohjelma ehdottaa tulosta.</p>
+        <input type="file" id="video-valitsin" accept="video/*" style="margin-bottom:10px;color:var(--text)" onchange="lataaVideo(this)">
+        <div style="border-radius:10px;overflow:hidden;background:#000;margin-bottom:12px;display:none" id="video-wrap">
+          <video id="video-player" style="width:100%;max-height:260px;display:block" controls playsinline></video>
+        </div>
+        <div class="frame-btns" id="frame-btns" style="display:none">
+          <button class="frame-btn" onclick="askellaVideo(-1)">◀◀ −1s</button>
+          <button class="frame-btn" onclick="askellaVideo(-.1)">◀ −0.1s</button>
+          <button class="frame-btn" onclick="togglePlay()">▶/⏸</button>
+          <button class="frame-btn" onclick="askellaVideo(.1)">+0.1s ▶</button>
+          <button class="frame-btn" onclick="askellaVideo(1)">+1s ▶▶</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="merkki-napit">
+          <button class="merkki-btn" id="btn-syotto-v" onclick="merkitseSyotto()">1️⃣ Syöttö nousee</button>
+          <button class="merkki-btn" id="btn-lahto-v" onclick="meritseLahto()">2️⃣ Etenijä lähtee</button>
+        </div>
+        <div class="ehdotus-strip" id="ehdotus-strip"></div>
+        <div id="delta-teksti" class="muted" style="font-size:.8rem;text-align:center;min-height:16px"></div>
+        <button class="btn btn-ghost btn-full" style="margin-top:8px;font-size:.8rem;display:none" id="nollaa-btn" onclick="nollaaVideo()">↺ Nollaa merkit</button>
+      </div>
+    </div>
+
+    <!-- MENI / EI MENNYT -->
+    <div class="card">
+      <div class="card-title">Lähteekö etenijä?</div>
+      <div style="display:flex;gap:10px">
+        <button class="iso-btn iso-btn-meni" id="btn-meni" onclick="valitseMeni('meni')">✅ MENI</button>
+        <button class="iso-btn iso-btn-ei" id="btn-ei" onclick="valitseMeni('pois')">❌ EI MENNYT</button>
+      </div>
+    </div>
+
+    <!-- Kuvaus -->
+    <div class="card">
+      <div class="card-title">Mitä näit? <span class="muted" style="font-weight:400">(vapaa kuvaus)</span></div>
+      <textarea id="kuvaus-input" rows="3" placeholder="esim. viuhka menopesän puolella ylhäällä, peukalo kentälle päin"></textarea>
+    </div>
+
+    <!-- Tarkemmat tiedot -->
+    <div class="card">
+      <details>
+        <summary>▸ Tarkempi tulos, tilanne ja värit (valinnainen)</summary>
+        <div style="margin-top:14px">
+
+          <div class="card-title">Tarkempi tulos</div>
+          <div id="tulos-napit" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px"></div>
+
+          <hr>
+          <div class="card-title" style="margin-top:12px">Ottelutilanne</div>
+
+          <label>Jakso</label>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button class="valinta-btn jakso-btn" style="flex:1" onclick="valitseJakso(1)">1. jakso</button>
+            <button class="valinta-btn jakso-btn" style="flex:1" onclick="valitseJakso(2)">2. jakso</button>
+          </div>
+
+          <label>Vuoropari</label>
+          <div style="display:flex;gap:8px;margin-bottom:12px" id="vuoropari-napit"></div>
+
+          <label>Tilanne</label>
+          <div id="tilanne-napit" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px"></div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+            <div><label>Lyöjä</label><input type="text" id="lyoja-input" placeholder="nimi/nro" style="font-size:.9rem"></div>
+            <div><label>Etenijä 1.</label><input type="text" id="et1-input" placeholder="nimi/nro" style="font-size:.9rem"></div>
+            <div><label>Etenijä 2.</label><input type="text" id="et2-input" placeholder="nimi/nro" style="font-size:.9rem"></div>
+          </div>
+          <div style="margin-bottom:12px">
+            <label>Etenijä 3.</label>
+            <input type="text" id="et3-input" placeholder="nimi/nro" style="font-size:.9rem">
+          </div>
+
+          <hr>
+          <div class="card-title" style="margin-top:12px">Syöttötilanne</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label>Vuoro</label>
+              <div style="display:flex;flex-wrap:wrap;gap:5px" id="vuoro-napit"></div>
+            </div>
+            <div>
+              <label>Palloja</label>
+              <div style="display:flex;gap:8px" id="pallot-napit"></div>
+            </div>
+          </div>
+          <label>Etenijät pesillä</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="etenijat-napit"></div>
+
+          <hr>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px">
+            <div class="card-title" style="margin:0">Viuhkan värit</div>
+            <button class="btn btn-ghost" style="padding:4px 8px;font-size:.75rem" onclick="tyhjennäVärit()">Tyhjennä</button>
+          </div>
+          <div class="väri-grid" id="vari-grid"></div>
+          <div id="vari-jarjestys" style="display:flex;gap:6px;flex-wrap:wrap;min-height:24px;margin-bottom:12px">
+            <span class="muted" style="font-size:.8rem">Ei värejä</span>
+          </div>
+
+          <hr>
+          <div class="card-title" style="margin-top:12px">Vapaan käden asento</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px" id="kasi-napit"></div>
+
+          <label>Lisähuomio</label>
+          <textarea id="huomio-input" rows="1" placeholder="valinnainen..."></textarea>
+        </div>
+      </details>
+    </div>
+
+    <button class="btn btn-success btn-full btn-lg" style="margin-bottom:24px" onclick="tallennaHavainto()">✅ Tallenna havainto</button>
+  </div>
+</div>
+
+<!-- ══ ANALYYSI ═══════════════════════════════════════════════════ -->
+<div id="view-analyysi" class="view">
+  <div class="topbar">
+    <div style="overflow:hidden">
+      <div class="topbar-title">📊 Analyysi</div>
+      <div class="topbar-sub" id="analyysi-sub"></div>
+    </div>
+    <button class="btn btn-ghost" style="padding:6px 10px;font-size:.75rem" id="analyysi-back" onclick="naytaSyotto()">← Takaisin</button>
+  </div>
+  <div class="content" id="analyysi-content"><div class="spinner">Ladataan...</div></div>
+</div>
+
+<!-- ══ ASETUKSET ══════════════════════════════════════════════════ -->
+<div id="view-asetukset" class="view">
+  <div class="topbar">
+    <div class="topbar-title">⚙️ Asetukset</div>
+    <button class="btn btn-ghost" style="padding:6px 10px;font-size:.75rem" onclick="naytaEtusivu()">← Takaisin</button>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-title">Ajoituskynnykset (videotyökalu)</div>
+      <label>Lento — enintään <strong id="lento-arvo">500</strong> ms</label>
+      <input type="range" id="lento-slider" min="100" max="1000" step="50" value="500"
+             oninput="document.getElementById('lento-arvo').textContent=this.value" style="width:100%;accent-color:var(--success)">
+      <label style="margin-top:14px">Nopea väärä — enintään <strong id="nopea-arvo">1200</strong> ms</label>
+      <input type="range" id="nopea-slider" min="500" max="2500" step="50" value="1200"
+             oninput="document.getElementById('nopea-arvo').textContent=this.value" style="width:100%;accent-color:var(--warning)">
+      <label style="margin-top:14px">Väärät pois — enintään <strong id="vaarat-arvo">2800</strong> ms</label>
+      <input type="range" id="vaarat-slider" min="1000" max="5000" step="100" value="2800"
+             oninput="document.getElementById('vaarat-arvo').textContent=this.value" style="width:100%;accent-color:var(--accent2)">
+      <button class="btn btn-success btn-full" style="margin-top:16px" onclick="tallennaAsetukset()">Tallenna</button>
+      <div id="asetukset-flash"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// FIREBASE — täytä omat arvosi
+// ══════════════════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "TAYTA-TAHAN",
+  authDomain:        "TAYTA-TAHAN.firebaseapp.com",
+  databaseURL:       "https://TAYTA-TAHAN-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "TAYTA-TAHAN",
+  storageBucket:     "TAYTA-TAHAN.firebasestorage.app",
+  messagingSenderId: "TAYTA-TAHAN",
+  appId:             "TAYTA-TAHAN"
+};
+
+// Tiimiläisten koodi — tyhjä = ei vaadita
+const TIIMI_KOODI = "";
+
+// ══════════════════════════════════════════════════════════════════
+// VAKIOT
+// ══════════════════════════════════════════════════════════════════
+const VARIT = ['punainen','sininen','vihreä','keltainen','oranssi','musta','valkoinen','violetti','ruskea','harmaa'];
+const VARI_HEX = {punainen:'#e84545',sininen:'#4588e8',vihreä:'#4fcf7a',keltainen:'#f7e14f',
+  oranssi:'#f7a34f',musta:'#2a2e45',valkoinen:'#e8eaf0',violetti:'#9b59b6',ruskea:'#8B6914',harmaa:'#7c8099'};
+const KASIEN_ASENNOT = {auki:'✋ auki',nyrkki:'✊ nyrkki',taskussa:'🤜 taskussa',
+  lanteilla:'🤚 lanteilla',viuhkassa:'🌀 viuhkassa',ei_nay:'👁 ei näy'};
+const MENI_TULOKSET = new Set(['meni','lento','sikalento','vaarat_pois','nopea_vaara','iso_vaara']);
+const TILANTEET = ['tyhjä','0-tilanne','1-tilanne','2-tilanne','3-tilanne',
+  '1-2-tilanne','1-3-tilanne','0-2-tilanne','2-3-tilanne','0-3-tilanne','1-2-3-tilanne','ajolähtö'];
+const TULOS_SELITYKSET = {
+  meni:'✅ meni (epäselvä)',lento:'✈ lento',sikalento:'🚀 sikalento',
+  vaarat_pois:'⛔ väärät pois',nopea_vaara:'⚡ nopea väärä',iso_vaara:'🛑 iso väärä',
+  pois:'❌ pois',epasela:'❓ epäselvä'
+};
+
+// ══════════════════════════════════════════════════════════════════
+// TILA
+// ══════════════════════════════════════════════════════════════════
+let db;
+let kayttaja = localStorage.getItem('mm_kayttaja') || '';
+let currentOtteluId = null;
+let havainnot = [];
+let asetukset = {lento_max_ms:500,nopea_vaara_max_ms:1200,vaarat_pois_max_ms:2800};
+let havantoListener = null;
+
+let tulostila='epasela', valitutVärit=[], valittuVuoro=1, valitutPallot=0;
+let valitutEtenijat='ei', valittuKäsi='ei_nay';
+let valittuJakso='', valittuVuoropari='', valittuTilanne='';
+let syottoAikaMs=null, syottoTs=null, lahtoTs=null;
+let analyysikaikki=false;
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+  } catch(e) {
+    document.body.innerHTML = '<div style="padding:40px;color:#f75757;font-family:sans-serif;max-width:480px;margin:0 auto">'
+      +'<h2>Firebase-konfiguraatio puuttuu</h2><p style="margin-top:12px">Täytä FIREBASE_CONFIG-muuttuja tiedoston alkuun.</p></div>';
+    return;
+  }
+  document.getElementById('uusi-pvm').value = tanaanPvm();
+  if (TIIMI_KOODI) document.getElementById('koodi-rivi').style.display = '';
+  document.getElementById('k-nimi').addEventListener('keydown', ev => { if(ev.key==='Enter') kirjauduSisaan(); });
+  db.ref('asetukset').once('value', snap => { if(snap.val()) Object.assign(asetukset, snap.val()); });
+  kayttaja ? naytaEtusivu() : nayta('kirjaudu');
+});
+
+// ══════════════════════════════════════════════════════════════════
+// NÄKYMÄT
+// ══════════════════════════════════════════════════════════════════
+function nayta(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function naytaEtusivu() {
+  nayta('etusivu');
+  document.getElementById('topbar-kayttaja').textContent = kayttaja;
+  lataaOttelut();
+}
+function naytaSyotto() { nayta('syotto'); }
+function naytaAnalyysi() {
+  analyysikaikki = false;
+  document.getElementById('analyysi-back').onclick = naytaSyotto;
+  document.getElementById('analyysi-sub').textContent = document.getElementById('syotto-otsikko').textContent;
+  nayta('analyysi');
+  renderAnalyysi();
+}
+function naytaAsetukset() {
+  nayta('asetukset');
+  db.ref('asetukset').once('value', snap => {
+    const a = snap.val() || {};
+    const lm = a.lento_max_ms||500, nm = a.nopea_vaara_max_ms||1200, vm = a.vaarat_pois_max_ms||2800;
+    document.getElementById('lento-slider').value=lm; document.getElementById('lento-arvo').textContent=lm;
+    document.getElementById('nopea-slider').value=nm; document.getElementById('nopea-arvo').textContent=nm;
+    document.getElementById('vaarat-slider').value=vm; document.getElementById('vaarat-arvo').textContent=vm;
+    Object.assign(asetukset,{lento_max_ms:+lm,nopea_vaara_max_ms:+nm,vaarat_pois_max_ms:+vm});
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════════
+function kirjauduSisaan() {
+  const nimi = document.getElementById('k-nimi').value.trim();
+  const koodi = document.getElementById('k-koodi').value.trim();
+  if (!nimi) { flash('kirjaudu-flash','Anna nimesi.',true); return; }
+  if (TIIMI_KOODI && koodi !== TIIMI_KOODI) { flash('kirjaudu-flash','Väärä tiimiläisten koodi.',true); return; }
+  kayttaja = nimi;
+  localStorage.setItem('mm_kayttaja', nimi);
+  naytaEtusivu();
+}
+function kirjauduUlos() {
+  if (havantoListener) { db.ref('havainnot/'+currentOtteluId).off('value', havantoListener); havantoListener=null; }
+  localStorage.removeItem('mm_kayttaja');
+  kayttaja = '';
+  nayta('kirjaudu');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// OTTELUT
+// ══════════════════════════════════════════════════════════════════
+function luoOttelu() {
+  const vastustaja = document.getElementById('uusi-vastustaja').value.trim();
+  const pvm = document.getElementById('uusi-pvm').value.trim() || tanaanPvm();
+  const sarja = document.getElementById('uusi-sarja').value;
+  const nimi = vastustaja ? vastustaja+' '+pvm : 'Ottelu '+pvm;
+  const id = nimi.replace(/\s+/g,'_').replace(/[/.]/g,'')+'_'+Date.now();
+  db.ref('ottelut/'+id).set({nimi, vastustaja, sarja, luotu: new Date().toISOString()});
+  avaaOttelu(id, nimi);
+}
+
+function avaaOttelu(id, nimi) {
+  if (havantoListener) { db.ref('havainnot/'+currentOtteluId).off('value', havantoListener); havantoListener=null; }
+  currentOtteluId = id;
+  havainnot = [];
+  document.getElementById('syotto-otsikko').textContent = nimi || id.replace(/_/g,' ');
+  document.getElementById('syotto-sub').textContent = '0 havaintoa';
+  initLomake();
+  nayta('syotto');
+  havantoListener = db.ref('havainnot/'+id).orderByKey().on('value', snap => {
+    havainnot = [];
+    snap.forEach(c => havainnot.push({id:c.key,...c.val()}));
+    renderViimeiset();
+    document.getElementById('syotto-sub').textContent = havainnot.length+' havaintoa';
+  });
+}
+
+function lataaOttelut() {
+  const lista = document.getElementById('ottelut-lista');
+  lista.innerHTML = '<div class="spinner">Ladataan...</div>';
+  db.ref('ottelut').orderByChild('luotu').once('value', snap => {
+    const ot = [];
+    snap.forEach(c => ot.unshift({id:c.key,...c.val()}));
+    if (!ot.length) {
+      lista.innerHTML = '<div class="card" style="text-align:center;color:var(--muted);padding:32px">Ei vielä otteluita.</div>';
+      return;
+    }
+    lista.innerHTML = '<div class="card"><div class="card-title">📋 Aiemmat ottelut</div>'
+      + ot.map(o=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-weight:600">${esc(o.nimi)}</div>
+            <div class="muted" style="font-size:.8rem">${o.vastustaja||''}${o.sarja?' · '+o.sarja:''}</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost" style="padding:5px 10px;font-size:.75rem" onclick="avaaOttelu('${o.id}','${esc(o.nimi)}')">Syötä</button>
+            <button class="btn btn-warning" style="padding:5px 10px;font-size:.75rem" onclick="avaaAnalyysiSuoraan('${o.id}','${esc(o.nimi)}')">Analysoi</button>
+          </div>
+        </div>`).join('')
+      + (ot.length>1?'<div style="margin-top:12px"><button class="btn btn-success btn-full" onclick="avaaAnalyysiKaikki()">🔍 Analysoi kaikki ottelut yhdistettynä</button></div>':'')
+      + '</div>';
+  });
+}
+
+function avaaAnalyysiSuoraan(id, nimi) {
+  if (havantoListener) { db.ref('havainnot/'+currentOtteluId).off('value', havantoListener); havantoListener=null; }
+  currentOtteluId = id;
+  analyysikaikki = false;
+  document.getElementById('analyysi-sub').textContent = nimi;
+  document.getElementById('analyysi-back').onclick = naytaEtusivu;
+  nayta('analyysi');
+  document.getElementById('analyysi-content').innerHTML = '<div class="spinner">Ladataan...</div>';
+  db.ref('havainnot/'+id).orderByKey().once('value', snap => {
+    havainnot = [];
+    snap.forEach(c => havainnot.push({id:c.key,...c.val()}));
+    renderAnalyysi();
+  });
+}
+
+function avaaAnalyysiKaikki() {
+  analyysikaikki = true;
+  document.getElementById('analyysi-sub').textContent = 'Kaikki ottelut';
+  document.getElementById('analyysi-back').onclick = naytaEtusivu;
+  nayta('analyysi');
+  document.getElementById('analyysi-content').innerHTML = '<div class="spinner">Ladataan...</div>';
+  db.ref('havainnot').once('value', snap => {
+    havainnot = [];
+    snap.forEach(ottelu => ottelu.forEach(c => havainnot.push({id:c.key,...c.val()})));
+    renderAnalyysi();
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HAVAINNOT
+// ══════════════════════════════════════════════════════════════════
+function tallennaHavainto() {
+  if (!currentOtteluId) return;
+  db.ref('havainnot/'+currentOtteluId).push({
+    tulos: tulostila,
+    kuvaus: document.getElementById('kuvaus-input').value.trim(),
+    jakso: valittuJakso,
+    vuoropari: valittuVuoropari,
+    tilanne: valittuTilanne,
+    lyoja: document.getElementById('lyoja-input').value.trim(),
+    etenija_1: document.getElementById('et1-input').value.trim(),
+    etenija_2: document.getElementById('et2-input').value.trim(),
+    etenija_3: document.getElementById('et3-input').value.trim(),
+    vuoro: valittuVuoro,
+    pallot: valitutPallot,
+    etenijat: valitutEtenijat,
+    varit: valitutVärit.length ? valitutVärit : ['-'],
+    vapaa_kasi: valittuKäsi,
+    huomio: document.getElementById('huomio-input').value.trim(),
+    syotto_aika_ms: syottoAikaMs,
+    luotu: new Date().toISOString(),
+    kirjaaja: kayttaja,
+  });
+  nollaaLomake();
+}
+
+function poistaViimeisin() {
+  if (!havainnot.length || !confirm('Poistetaan viimeisin havainto?')) return;
+  const v = havainnot[havainnot.length-1];
+  db.ref('havainnot/'+currentOtteluId+'/'+v.id).remove();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ASETUKSET
+// ══════════════════════════════════════════════════════════════════
+function tallennaAsetukset() {
+  const a = {
+    lento_max_ms: +document.getElementById('lento-slider').value,
+    nopea_vaara_max_ms: +document.getElementById('nopea-slider').value,
+    vaarat_pois_max_ms: +document.getElementById('vaarat-slider').value,
+  };
+  db.ref('asetukset').set(a).then(() => { Object.assign(asetukset,a); flash('asetukset-flash','Tallennettu!',false); });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RENDER: VIIMEISET
+// ══════════════════════════════════════════════════════════════════
+function renderViimeiset() {
+  const card = document.getElementById('viimeiset-card');
+  if (!havainnot.length) { card.style.display='none'; return; }
+  card.style.display = '';
+  document.getElementById('viimeiset-otsikko').textContent = 'Viimeisimmät ('+havainnot.length+')';
+  document.getElementById('viimeiset-lista').innerHTML = havainnot.slice(-5).reverse().map(h => {
+    const meni = MENI_TULOKSET.has(h.tulos);
+    const cls = meni?'badge-success':h.tulos==='pois'?'badge-danger':'badge-muted';
+    const label = meni?'✅ meni':h.tulos==='pois'?'❌ ei':'?';
+    const txt = h.kuvaus ? esc(h.kuvaus.slice(0,60))+(h.kuvaus.length>60?'…':'') : (h.varit||['-']).join(' → ');
+    return `<div class="havainto-rivi"><span class="badge ${cls}">${label}</span><span>${txt}</span></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RENDER: ANALYYSI
+// ══════════════════════════════════════════════════════════════════
+function renderAnalyysi() {
+  const el = document.getElementById('analyysi-content');
+  if (!havainnot.length) {
+    el.innerHTML = '<div class="card" style="text-align:center;color:var(--muted);padding:32px">Ei havaintoja analysoitavaksi.</div>';
+    return;
+  }
+  const meniH = havainnot.filter(h=>MENI_TULOKSET.has(h.tulos));
+  const poisH = havainnot.filter(h=>h.tulos==='pois');
+  const total = havainnot.length;
+  const teksti = tekstianalyysi(havainnot);
+  const kuviot = varikuvioAnalyysi(havainnot);
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-title">Yleiskatsaus</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:8px">
+          <div style="font-size:1.6rem;font-weight:800">${total}</div>
+          <div class="muted" style="font-size:.75rem">HAVAINTOA</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:rgba(79,207,122,.1);border-radius:8px">
+          <div style="font-size:1.6rem;font-weight:800;color:var(--success)">${meniH.length}</div>
+          <div class="muted" style="font-size:.75rem">MENI</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:rgba(247,87,87,.1);border-radius:8px">
+          <div style="font-size:1.6rem;font-weight:800;color:var(--danger)">${poisH.length}</div>
+          <div class="muted" style="font-size:.75rem">EI MENNYT</div>
+        </div>
+      </div>
+      ${renderTulosJakauma(havainnot)}
+    </div>
+    ${teksti.length ? `<div class="card">
+      <div class="card-title">Tekstianalyysi — erottavat termit</div>
+      <p class="muted" style="font-size:.8rem;margin-bottom:10px">Sanat/bigramit jotka esiintyvät enemmän toisessa ryhmässä.</p>
+      <table><tr><th>Termi</th><th>Meni%</th><th>n</th><th style="width:80px"></th></tr>
+      ${teksti.slice(0,30).map(t=>`<tr>
+        <td>${esc(t.termi)}</td>
+        <td style="color:${t.mp>=60?'var(--success)':t.mp<=40?'var(--danger)':'var(--text)'};font-weight:700">${t.mp}%</td>
+        <td class="muted">${t.n}</td>
+        <td><div class="bar" style="width:${t.mp}%;background:${t.mp>=50?'var(--success)':'var(--danger)'}"></div></td>
+      </tr>`).join('')}</table></div>` : ''}
+    ${kuviot.length ? `<div class="card">
+      <div class="card-title">Värikuviot</div>
+      <table><tr><th>Kuvio</th><th>Meni%</th><th>n</th><th style="width:80px"></th></tr>
+      ${kuviot.slice(0,20).map(k=>`<tr>
+        <td>${k.kuvio.map(v=>`<span class="badge" style="background:${VARI_HEX[v]||'#555'};color:${v==='valkoinen'||v==='keltainen'?'#000':'#fff'}">${v}</span>`).join(' → ')}</td>
+        <td style="color:${k.mp>=60?'var(--success)':k.mp<=40?'var(--danger)':'var(--text)'};font-weight:700">${k.mp}%</td>
+        <td class="muted">${k.n}</td>
+        <td><div class="bar" style="width:${k.mp}%;background:${k.mp>=50?'var(--success)':'var(--danger)'}"></div></td>
+      </tr>`).join('')}</table></div>` : ''}
+  `;
+}
+
+function renderTulosJakauma(hvt) {
+  const laskuri = {};
+  hvt.forEach(h => { laskuri[h.tulos]=(laskuri[h.tulos]||0)+1; });
+  return '<div style="margin-top:8px">'+Object.entries(laskuri).sort((a,b)=>b[1]-a[1]).map(([t,n])=>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:.85rem">
+      <span style="width:120px;color:var(--muted)">${TULOS_SELITYKSET[t]||t}</span>
+      <div style="flex:1;background:var(--surface2);border-radius:4px;height:16px;overflow:hidden">
+        <div style="height:100%;width:${Math.round(n/hvt.length*100)}%;background:${MENI_TULOKSET.has(t)?'var(--success)':t==='pois'?'var(--danger)':'var(--muted)'}"></div>
+      </div>
+      <span style="width:24px;text-align:right">${n}</span>
+    </div>`).join('')+'</div>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ANALYYSIFUNKTIOT
+// ══════════════════════════════════════════════════════════════════
+function tekstianalyysi(hvt) {
+  const stop = new Set(['on','ei','ja','se','että','kun','oli','tai','ole','hän','ne','tämä','tuo','siinä',
+    'kaikki','joka','mitä','vaan','myös','siis','mutta','niin','olla','olen','siitä']);
+  const meniH = hvt.filter(h=>MENI_TULOKSET.has(h.tulos)&&h.kuvaus);
+  const poisH = hvt.filter(h=>h.tulos==='pois'&&h.kuvaus);
+  if (meniH.length<2 || poisH.length<2) return [];
+  function sanat(t) {
+    const ws=(t||'').toLowerCase().replace(/[,.:;!?()\[\]]/g,' ').split(/\s+/).filter(w=>w.length>=3&&!stop.has(w));
+    const r=[...ws];
+    for(let i=0;i<ws.length-1;i++) r.push(ws[i]+' '+ws[i+1]);
+    return r;
+  }
+  const mc={},pc={};
+  meniH.forEach(h=>sanat(h.kuvaus).forEach(w=>{mc[w]=(mc[w]||0)+1;}));
+  poisH.forEach(h=>sanat(h.kuvaus).forEach(w=>{pc[w]=(pc[w]||0)+1;}));
+  const kaikki=new Set([...Object.keys(mc),...Object.keys(pc)]);
+  const res=[];
+  kaikki.forEach(w=>{const mn=mc[w]||0,pn=pc[w]||0,n=mn+pn;if(n<2)return;const mp=Math.round(mn/n*100);res.push({termi:w,mp,n});});
+  return res.sort((a,b)=>Math.abs(b.mp-50)-Math.abs(a.mp-50)).slice(0,40);
+}
+
+function varikuvioAnalyysi(hvt) {
+  const laskuri={};
+  hvt.forEach(h=>{
+    const k=(h.varit||['-']).join('→');
+    if(!laskuri[k]) laskuri[k]={meni:0,pois:0,kuvio:h.varit||['-']};
+    if(MENI_TULOKSET.has(h.tulos)) laskuri[k].meni++;
+    else if(h.tulos==='pois') laskuri[k].pois++;
+  });
+  return Object.values(laskuri).filter(k=>k.meni+k.pois>=2)
+    .map(k=>({kuvio:k.kuvio,mp:Math.round(k.meni/(k.meni+k.pois)*100),n:k.meni+k.pois}))
+    .sort((a,b)=>b.n-a.n);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LOMAKE: INIT & NOLLAUS
+// ══════════════════════════════════════════════════════════════════
+function initLomake() {
+  document.getElementById('tulos-napit').innerHTML =
+    Object.entries(TULOS_SELITYKSET).map(([k,v])=>`<button class="valinta-btn tulos-btn" onclick="valitseTulos('${k}')">${v}</button>`).join('');
+  document.getElementById('tilanne-napit').innerHTML =
+    TILANTEET.map(t=>`<button class="valinta-btn tilanne-btn" onclick="valitseTilanne('${esc(t)}')">${esc(t)}</button>`).join('');
+  document.getElementById('vuoropari-napit').innerHTML =
+    [1,2,3,4,5].map(v=>`<button class="valinta-btn vuoropari-btn" style="flex:1;min-width:40px" onclick="valitseVuoropari(${v})">${v}</button>`).join('');
+  document.getElementById('vuoro-napit').innerHTML =
+    Array.from({length:9},(_,i)=>i+1).map(v=>`<button class="number-btn${v===1?' valittu':''}" style="flex:0 0 calc(33% - 4px);padding:8px;font-size:.9rem" onclick="valitseVuoro(${v})">${v}</button>`).join('');
+  document.getElementById('pallot-napit').innerHTML =
+    [0,1,2].map(p=>`<button class="number-btn${p===0?' valittu':''}" onclick="valitsePallot(${p})">${p}</button>`).join('');
+  document.getElementById('etenijat-napit').innerHTML =
+    ['ei','1','2','3','12','13','23','123'].map((e2,i)=>`<button class="valinta-btn${i===0?' valittu':''}" style="flex:0 0 auto;min-width:44px" onclick="valitseEtenijat('${e2}')">${e2==='ei'?'–':e2}</button>`).join('');
+  document.getElementById('vari-grid').innerHTML =
+    VARIT.map(v=>`<div class="väri-btn" id="vbtn-${v}" style="background:${VARI_HEX[v]}" onclick="napautaVäri('${v}')">${v.slice(0,3).toUpperCase()}<span class="jnro" id="jnro-${v}"></span></div>`).join('');
+  document.getElementById('kasi-napit').innerHTML =
+    Object.entries(KASIEN_ASENNOT).map(([k,v])=>`<button class="valinta-btn${k==='ei_nay'?' valittu':''}" onclick="valitseKäsi('${k}')">${v}</button>`).join('');
+  nollaaLomake();
+}
+
+function nollaaLomake() {
+  tulostila='epasela'; valitutVärit=[]; valittuVuoro=1; valitutPallot=0;
+  valitutEtenijat='ei'; valittuKäsi='ei_nay';
+  valittuJakso=''; valittuVuoropari=''; valittuTilanne=''; syottoAikaMs=null;
+  document.getElementById('btn-meni').classList.remove('valittu');
+  document.getElementById('btn-ei').classList.remove('valittu');
+  ['kuvaus-input','lyoja-input','et1-input','et2-input','et3-input','huomio-input'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.querySelectorAll('.tulos-btn,.tilanne-btn,.jakso-btn,.vuoropari-btn').forEach(b=>b.classList.remove('valittu'));
+  document.querySelectorAll('#vuoro-napit .number-btn').forEach((b,i)=>b.classList.toggle('valittu',i===0));
+  document.querySelectorAll('#pallot-napit .number-btn').forEach((b,i)=>b.classList.toggle('valittu',i===0));
+  document.querySelectorAll('#etenijat-napit .valinta-btn').forEach((b,i)=>b.classList.toggle('valittu',i===0));
+  document.querySelectorAll('#kasi-napit .valinta-btn').forEach(b=>b.classList.toggle('valittu',b.getAttribute('onclick')===`valitseKäsi('ei_nay')`));
+  VARIT.forEach(v=>{document.getElementById('vbtn-'+v)?.classList.remove('valittu');const j=document.getElementById('jnro-'+v);if(j)j.textContent='';});
+  document.getElementById('vari-jarjestys').innerHTML='<span class="muted" style="font-size:.8rem">Ei värejä</span>';
+  nollaaVideo();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LOMAKKEEN VALINNAT
+// ══════════════════════════════════════════════════════════════════
+function valitseMeni(val) {
+  tulostila=val;
+  document.getElementById('btn-meni').classList.toggle('valittu',val!=='pois');
+  document.getElementById('btn-ei').classList.toggle('valittu',val==='pois');
+  document.querySelectorAll('.tulos-btn').forEach(b=>b.classList.remove('valittu'));
+}
+function valitseTulos(t) {
+  tulostila=t;
+  document.querySelectorAll('.tulos-btn').forEach(b=>b.classList.toggle('valittu',b.getAttribute('onclick')===`valitseTulos('${t}')`));
+  document.getElementById('btn-meni').classList.toggle('valittu',MENI_TULOKSET.has(t));
+  document.getElementById('btn-ei').classList.toggle('valittu',t==='pois');
+}
+function valitseJakso(j) {
+  valittuJakso=j;
+  document.querySelectorAll('.jakso-btn').forEach(b=>b.classList.toggle('valittu',b.getAttribute('onclick')===`valitseJakso(${j})`));
+}
+function valitseVuoropari(v) {
+  valittuVuoropari=v;
+  document.querySelectorAll('.vuoropari-btn').forEach(b=>b.classList.toggle('valittu',b.getAttribute('onclick')===`valitseVuoropari(${v})`));
+}
+function valitseTilanne(t) {
+  valittuTilanne=t;
+  document.querySelectorAll('.tilanne-btn').forEach(b=>b.classList.toggle('valittu',b.getAttribute('onclick')===`valitseTilanne('${t}')`));
+}
+function valitseVuoro(v) {
+  valittuVuoro=v;
+  document.querySelectorAll('#vuoro-napit .number-btn').forEach(b=>b.classList.toggle('valittu',b.getAttribute('onclick')===`valitseVuoro(${v})`));
+}
+function valitsePallot(p) {
+  valitutPallot=p;
+  document.querySelectorAll('#pallot-napit .number-btn').forEach(b=>b.classList.toggle('valittu',b.getAttribute('onclick')===`valitsePallot(${p})`));
+}
+function valitseEtenijat(e2) {
+  valitutEtenijat=e2;
+  document.querySelectorAll('#etenijat-napit .valinta-btn').forEach(b=>b.classList.toggle('valittu',b.getAttribute('onclick')===`valitseEtenijat('${e2}')`));
+}
+function valitseKäsi(a) {
+  valittuKäsi=a;
+  document.querySelectorAll('#kasi-napit .valinta-btn').forEach(b=>b.classList.toggle('valittu',b.getAttribute('onclick')===`valitseKäsi('${a}')`));
+}
+function napautaVäri(v) {
+  const i=valitutVärit.indexOf(v);
+  if(i===-1) valitutVärit.push(v); else valitutVärit.splice(i,1);
+  document.getElementById('vbtn-'+v).classList.toggle('valittu',valitutVärit.includes(v));
+  paivitaVarit();
+}
+function tyhjennäVärit() {
+  VARIT.forEach(v=>document.getElementById('vbtn-'+v)?.classList.remove('valittu'));
+  valitutVärit=[];
+  paivitaVarit();
+}
+function paivitaVarit() {
+  VARIT.forEach(v=>{const j=document.getElementById('jnro-'+v);const i=valitutVärit.indexOf(v);if(j)j.textContent=i>=0?(i+1):'';});
+  const jd=document.getElementById('vari-jarjestys');
+  if(!valitutVärit.length){jd.innerHTML='<span class="muted" style="font-size:.8rem">Ei värejä</span>';return;}
+  jd.innerHTML=valitutVärit.map((v,i)=>`${i?'<span class="muted">→</span>':''}<span class="badge" style="background:${VARI_HEX[v]||'#555'};color:${v==='valkoinen'||v==='keltainen'?'#000':'#fff'}">${v}</span>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// VIDEO
+// ══════════════════════════════════════════════════════════════════
+function toggleVideo(){const el=document.getElementById('video-osio');el.style.display=el.style.display==='none'?'':'none';}
+function lataaVideo(inp){
+  if(!inp.files[0])return;
+  document.getElementById('video-player').src=URL.createObjectURL(inp.files[0]);
+  document.getElementById('video-wrap').style.display='';
+  document.getElementById('frame-btns').style.display='flex';
+}
+function askellaVideo(d){const v=document.getElementById('video-player');v.currentTime=Math.max(0,v.currentTime+d);}
+function togglePlay(){const v=document.getElementById('video-player');v.paused?v.play():v.pause();}
+function merkitseSyotto(){
+  const v=document.getElementById('video-player');v.pause();
+  syottoTs=v.currentTime;
+  const b=document.getElementById('btn-syotto-v');b.textContent=`✅ Syöttö: ${syottoTs.toFixed(2)}s`;b.classList.add('merkitty');
+  laskeEhdotus();
+}
+function meritseLahto(){
+  const v=document.getElementById('video-player');v.pause();
+  lahtoTs=v.currentTime;
+  const b=document.getElementById('btn-lahto-v');b.textContent=`✅ Lähtö: ${lahtoTs.toFixed(2)}s`;b.classList.add('merkitty');
+  laskeEhdotus();
+}
+function laskeEhdotus(){
+  if(syottoTs===null||lahtoTs===null)return;
+  const ms=Math.round((lahtoTs-syottoTs)*1000);
+  syottoAikaMs=ms;
+  document.getElementById('nollaa-btn').style.display='';
+  const LM=asetukset.lento_max_ms,NM=asetukset.nopea_vaara_max_ms,VM=asetukset.vaarat_pois_max_ms;
+  let tulos,teksti,vari;
+  if(ms<0){tulos='epasela';teksti='Lähtö ennen syöttöä — tarkista';vari='#7c8099';}
+  else if(ms<=LM){tulos='lento';teksti=`${ms}ms → ✈ LENTO`;vari='#4fcf7a';}
+  else if(ms<=NM){tulos='nopea_vaara';teksti=`${ms}ms → ⚡ NOPEA VÄÄRÄ`;vari='#f7e14f';}
+  else if(ms<=VM){tulos='vaarat_pois';teksti=`${ms}ms → ⛔ VÄÄRÄT POIS`;vari='#f7a34f';}
+  else{tulos='pois';teksti=`${ms}ms → ❌ EI MENNYT`;vari='#f75757';}
+  const s=document.getElementById('ehdotus-strip');
+  s.style.display='';s.style.background=vari;s.style.color=vari==='#f7e14f'?'#0f1117':'#fff';s.textContent=teksti;
+  document.getElementById('delta-teksti').textContent=`(lento<${LM}ms · nopea<${NM}ms · väärät<${VM}ms)`;
+  if(tulos==='pois') valitseMeni('pois'); else{valitseMeni('meni');valitseTulos(tulos);}
+}
+function nollaaVideo(){
+  syottoTs=null;lahtoTs=null;syottoAikaMs=null;
+  const bs=document.getElementById('btn-syotto-v');if(bs){bs.textContent='1️⃣ Syöttö nousee';bs.classList.remove('merkitty');}
+  const bl=document.getElementById('btn-lahto-v');if(bl){bl.textContent='2️⃣ Etenijä lähtee';bl.classList.remove('merkitty');}
+  const es=document.getElementById('ehdotus-strip');if(es)es.style.display='none';
+  const dt=document.getElementById('delta-teksti');if(dt)dt.textContent='';
+  const nb=document.getElementById('nollaa-btn');if(nb)nb.style.display='none';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// APUTOIMINNOT
+// ══════════════════════════════════════════════════════════════════
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function tanaanPvm(){const d=new Date();return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear();}
+function flash(id,teksti,virhe){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=`<div class="flash ${virhe?'flash-err':'flash-ok'}">${esc(teksti)}</div>`;
+  if(!virhe)setTimeout(()=>{el.innerHTML='';},3000);
+}
+</script>
+</body>
+</html>
