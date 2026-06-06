@@ -21,7 +21,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px;margin-top:10px}
 label:first-child{margin-top:0}
 input[type=text],input[type=password],select,textarea{width:100%;background:var(--surface2);
-  border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:.95rem;font-family:inherit}
+  border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);
+  font-size:.95rem;font-family:inherit}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 textarea{resize:vertical}
 select option{background:var(--surface2)}
@@ -50,19 +51,16 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
 .flash{padding:10px 14px;border-radius:8px;margin-top:10px;font-size:.9rem;font-weight:600}
 .flash-ok{background:rgba(79,207,122,.15);color:var(--success);border:1px solid var(--success)}
 .flash-err{background:rgba(247,87,87,.15);color:var(--danger);border:1px solid var(--danger)}
-/* Havainto-rivi */
 .havainto-rivi{display:flex;align-items:flex-start;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
 .havainto-rivi:last-child{border-bottom:none}
-.havainto-teksti{flex:1;font-size:.88rem;line-height:1.4;color:var(--text)}
+.havainto-teksti{flex:1;font-size:.85rem;line-height:1.5;color:var(--text)}
 .havainto-muokkaa{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;
-  color:var(--muted);font-size:.75rem;cursor:pointer;white-space:nowrap}
+  color:var(--muted);font-size:.75rem;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .havainto-muokkaa:hover{border-color:var(--accent);color:var(--accent)}
-/* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;justify-content:center}
 .modal-bg.hidden{display:none}
 .modal{background:var(--surface);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
 .modal-title{font-weight:800;font-size:1rem;margin-bottom:16px;color:var(--accent)}
-/* Analyysi */
 table{width:100%;border-collapse:collapse;font-size:.85rem}
 th,td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--border)}
 th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
@@ -72,6 +70,18 @@ th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
 .stat-num{font-size:1.8rem;font-weight:800}
 .stat-lbl{font-size:.75rem;color:var(--muted);margin-top:2px}
 .spinner{text-align:center;padding:40px;color:var(--muted)}
+/* Position selector */
+.pos-row{display:flex;gap:5px;margin-bottom:8px}
+.pos-btn{flex:1;padding:8px 3px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--muted);font-size:.78rem;cursor:pointer;
+  transition:all .15s;text-align:center;line-height:1.3}
+.pos-btn.sel-fa{border-color:var(--accent);color:var(--text);background:rgba(79,142,247,.2);font-weight:700}
+.pos-btn.sel-vk{border-color:var(--accent2);color:var(--text);background:rgba(247,163,79,.2);font-weight:700}
+.arm-section{border-radius:10px;padding:12px;margin-bottom:10px}
+.arm-fa{background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.22)}
+.arm-vk{background:rgba(247,163,79,.07);border:1px solid rgba(247,163,79,.22)}
+.arm-head{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}
+.sub-lbl{font-size:.75rem;color:var(--muted);margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -138,16 +148,92 @@ th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
   </div>
   <div class="content">
 
-    <!-- Syöttökortti -->
     <div class="card">
       <div class="card-title">Lähteekö etenijä?</div>
       <div style="display:flex;gap:10px;margin-bottom:16px">
         <button class="iso-btn iso-btn-meni" id="btn-meni" onclick="valitseMeni('meni')">✅ MENI</button>
         <button class="iso-btn iso-btn-ei"   id="btn-ei"   onclick="valitseMeni('pois')">❌ EI MENNYT</button>
       </div>
-      <label>Mitä näit? <span class="muted" style="font-weight:400">(vapaa kuvaus)</span></label>
-      <textarea id="kuvaus-input" rows="3"
-        placeholder="esim. viuhka menopesän puolella ylhäällä, peukalo kentälle päin, vapaa käsi rinnan edessä"></textarea>
+
+      <hr>
+      <div class="card-title" style="margin-bottom:10px">Merkin asento</div>
+
+      <!-- SVG figure -->
+      <div style="display:flex;justify-content:center;align-items:center;gap:6px;margin-bottom:12px">
+        <div style="font-size:.65rem;color:var(--muted);text-align:center;width:36px;line-height:1.3">Lähtö-<br>pesä</div>
+        <svg id="figure-svg" viewBox="0 0 220 230" width="170" height="178" style="overflow:visible;flex-shrink:0">
+          <!-- body -->
+          <circle cx="110" cy="40" r="18" fill="none" stroke="#7c8099" stroke-width="2.5"/>
+          <line x1="110" y1="58" x2="110" y2="72" stroke="#7c8099" stroke-width="2.5"/>
+          <line x1="66" y1="72" x2="154" y2="72" stroke="#7c8099" stroke-width="2.5"/>
+          <line x1="110" y1="72" x2="110" y2="150" stroke="#7c8099" stroke-width="2.5"/>
+          <line x1="110" y1="150" x2="82" y2="215" stroke="#7c8099" stroke-width="2.5"/>
+          <line x1="110" y1="150" x2="138" y2="215" stroke="#7c8099" stroke-width="2.5"/>
+          <!-- viuhka arm (blue) -->
+          <line id="fa-line" x1="110" y1="72" x2="76" y2="120" stroke="#4f8ef7" stroke-width="5" stroke-linecap="round" opacity="0.25"/>
+          <circle id="fa-dot" cx="76" cy="120" r="0" fill="#4f8ef7"/>
+          <!-- vapaa käsi arm (orange) -->
+          <line id="vk-line" x1="110" y1="72" x2="144" y2="120" stroke="#f7a34f" stroke-width="5" stroke-linecap="round" opacity="0.25"/>
+          <circle id="vk-dot" cx="144" cy="120" r="0" fill="#f7a34f"/>
+        </svg>
+        <div style="font-size:.65rem;color:var(--muted);text-align:center;width:36px;line-height:1.3">Meno-<br>pesä</div>
+      </div>
+      <div style="text-align:center;font-size:.75rem;margin-bottom:14px;color:var(--muted)">
+        <span style="color:#4f8ef7;font-weight:700">─── Viuhka</span>
+        &nbsp;&nbsp;
+        <span style="color:#f7a34f;font-weight:700">─── Vapaa käsi</span>
+      </div>
+
+      <!-- VIUHKA controls -->
+      <div class="arm-section arm-fa">
+        <div class="arm-head" style="color:#4f8ef7">🔵 Viuhka</div>
+        <div class="sub-lbl">Puoli</div>
+        <div class="pos-row">
+          <button class="pos-btn" data-g="fa-puoli" data-v="lahto"  onclick="valitsePos('fa','puoli','lahto')">Lähtöpesä</button>
+          <button class="pos-btn" data-g="fa-puoli" data-v="edessa" onclick="valitsePos('fa','puoli','edessa')">Edessä</button>
+          <button class="pos-btn" data-g="fa-puoli" data-v="meno"   onclick="valitsePos('fa','puoli','meno')">Menopesä</button>
+        </div>
+        <div class="sub-lbl">Korkeus</div>
+        <div class="pos-row">
+          <button class="pos-btn" data-g="fa-korkeus" data-v="ylos"  onclick="valitsePos('fa','korkeus','ylos')">Ylhäällä</button>
+          <button class="pos-btn" data-g="fa-korkeus" data-v="keski" onclick="valitsePos('fa','korkeus','keski')">Keski</button>
+          <button class="pos-btn" data-g="fa-korkeus" data-v="alas"  onclick="valitsePos('fa','korkeus','alas')">Alhaalla</button>
+        </div>
+        <div class="sub-lbl">Ote</div>
+        <div class="pos-row">
+          <button class="pos-btn" data-g="fa-ote" data-v="rystyset" onclick="valitsePos('fa','ote','rystyset')"><span style="color:#f75757">●</span> Rystyset</button>
+          <button class="pos-btn" data-g="fa-ote" data-v="peukalo"  onclick="valitsePos('fa','ote','peukalo')"><span style="color:#f7e14f">●</span> Peukalo</button>
+          <button class="pos-btn" data-g="fa-ote" data-v="ei_nay"   onclick="valitsePos('fa','ote','ei_nay')">Ei näy</button>
+        </div>
+      </div>
+
+      <!-- VAPAA KÄSI controls -->
+      <div class="arm-section arm-vk">
+        <div class="arm-head" style="color:#f7a34f">🟠 Vapaa käsi</div>
+        <div class="sub-lbl">Puoli</div>
+        <div class="pos-row">
+          <button class="pos-btn" data-g="vk-puoli" data-v="lahto"  onclick="valitsePos('vk','puoli','lahto')">Lähtöpesä</button>
+          <button class="pos-btn" data-g="vk-puoli" data-v="edessa" onclick="valitsePos('vk','puoli','edessa')">Edessä</button>
+          <button class="pos-btn" data-g="vk-puoli" data-v="meno"   onclick="valitsePos('vk','puoli','meno')">Menopesä</button>
+        </div>
+        <div class="sub-lbl">Korkeus</div>
+        <div class="pos-row">
+          <button class="pos-btn" data-g="vk-korkeus" data-v="ylos"  onclick="valitsePos('vk','korkeus','ylos')">Ylhäällä</button>
+          <button class="pos-btn" data-g="vk-korkeus" data-v="keski" onclick="valitsePos('vk','korkeus','keski')">Keski</button>
+          <button class="pos-btn" data-g="vk-korkeus" data-v="alas"  onclick="valitsePos('vk','korkeus','alas')">Alhaalla</button>
+        </div>
+        <div class="sub-lbl">Asento</div>
+        <div class="pos-row">
+          <button class="pos-btn" data-g="vk-asento" data-v="auki"   onclick="valitsePos('vk','asento','auki')"><span style="color:#4fcf7a">●</span> Auki</button>
+          <button class="pos-btn" data-g="vk-asento" data-v="nyrkki" onclick="valitsePos('vk','asento','nyrkki')"><span style="color:#f75757">●</span> Nyrkki</button>
+          <button class="pos-btn" data-g="vk-asento" data-v="ei_nay" onclick="valitsePos('vk','asento','ei_nay')">Ei näy</button>
+        </div>
+      </div>
+
+      <hr>
+      <label>Mitä näit? <span class="muted" style="font-weight:400">(vapaa kuvaus, valinnainen)</span></label>
+      <textarea id="kuvaus-input" rows="2"
+        placeholder="esim. viuhka korkella menopesän puolella, peukalo kentälle päin"></textarea>
       <button class="btn btn-success btn-full btn-lg" style="margin-top:12px" onclick="tallennaHavainto()">
         ✅ Tallenna havainto
       </button>
@@ -184,6 +270,7 @@ th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
       <button class="iso-btn iso-btn-meni" id="modal-btn-meni" onclick="modalValitseMeni('meni')" style="padding:14px;font-size:1rem">✅ MENI</button>
       <button class="iso-btn iso-btn-ei"   id="modal-btn-ei"   onclick="modalValitseMeni('pois')" style="padding:14px;font-size:1rem">❌ EI MENNYT</button>
     </div>
+    <div id="modal-asennot" style="font-size:.82rem;color:var(--muted);background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:12px"></div>
     <label>Kuvaus</label>
     <textarea id="modal-kuvaus" rows="4"></textarea>
     <div style="display:flex;gap:8px;margin-top:14px">
@@ -194,14 +281,9 @@ th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
   </div>
 </div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <script>
-// ══════════════════════════════════════════════════════════════════
-// FIREBASE CONFIG
-// ══════════════════════════════════════════════════════════════════
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyAsepdakF6YRi7EQw8kGSiJXcsOcZhbcoA",
   authDomain:        "merkinmurtaja-487ab.firebaseapp.com",
@@ -212,34 +294,50 @@ const FIREBASE_CONFIG = {
   appId:             "1:395883899531:web:784e0721393423441cc28e"
 };
 const TIIMI_KOODI = "";
-
-// ══════════════════════════════════════════════════════════════════
-// VAKIOT
-// ══════════════════════════════════════════════════════════════════
 const MENI_TULOKSET = new Set(['meni','lento','sikalento','vaarat_pois','nopea_vaara','iso_vaara']);
 
-// ══════════════════════════════════════════════════════════════════
-// TILA
-// ══════════════════════════════════════════════════════════════════
+// ── Tila ───────────────────────────────────────────────────────
 let db;
-let kayttaja = localStorage.getItem('mm_kayttaja') || '';
+let kayttaja    = localStorage.getItem('mm_kayttaja') || '';
 let currentOtteluId = null;
-let havainnot = [];
-let havantoRef = null;
+let havainnot   = [];
+let havantoRef  = null;
 let havantoListener = null;
-let tulostila = 'epasela';
-let modalTulos = 'epasela';
+let tulostila   = 'epasela';
+let modalTulos  = 'epasela';
 
-// ══════════════════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════════════════
+// Position state
+let viuhka     = {puoli:'', korkeus:'', ote:''};
+let vapaaKasi  = {puoli:'', korkeus:'', asento:''};
+
+// SVG arm coordinates (shoulder junction at x=110, y=72 in viewBox 0 0 220 230)
+const ARM_ORIGIN = {x: 110, y: 72};
+const ARM_COORDS = {
+  lahto_ylos:   {x: 42, y: 28},
+  lahto_keski:  {x: 22, y: 72},
+  lahto_alas:   {x: 44, y: 118},
+  edessa_ylos:  {x: 110, y: 24},
+  edessa_keski: {x: 110, y: 62},
+  edessa_alas:  {x: 110, y: 120},
+  meno_ylos:    {x: 178, y: 28},
+  meno_keski:   {x: 198, y: 72},
+  meno_alas:    {x: 176, y: 118},
+};
+
+// Label maps
+const PL = {lahto:'Lähtöpesä', edessa:'Edessä', meno:'Menopesä'};
+const KL = {ylos:'ylh.', keski:'keski', alas:'alh.'};
+const OL = {rystyset:'rystyset', peukalo:'peukalo', ei_nay:'ei näy'};
+const AL = {auki:'auki', nyrkki:'nyrkki', ei_nay:'ei näy'};
+
+// ── Init ───────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.database();
   } catch(e) {
     document.body.innerHTML = '<div style="padding:40px;color:#f75757;font-family:sans-serif;max-width:480px;margin:0 auto">'
-      + '<h2>Firebase-virhe</h2><p style="margin-top:12px">'+esc(e.message)+'</p></div>';
+      +'<h2>Firebase-virhe</h2><p style="margin-top:12px">'+esc(e.message)+'</p></div>';
     return;
   }
   document.getElementById('uusi-pvm').value = tanaanPvm();
@@ -248,9 +346,7 @@ window.addEventListener('DOMContentLoaded', () => {
   kayttaja ? naytaEtusivu() : nayta('kirjaudu');
 });
 
-// ══════════════════════════════════════════════════════════════════
-// NÄKYMÄT
-// ══════════════════════════════════════════════════════════════════
+// ── Näkymät ────────────────────────────────────────────────────
 function nayta(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-'+id).classList.add('active');
@@ -269,11 +365,9 @@ function naytaAnalyysi() {
   renderAnalyysi();
 }
 
-// ══════════════════════════════════════════════════════════════════
-// AUTH
-// ══════════════════════════════════════════════════════════════════
+// ── Auth ───────────────────────────────────────────────────────
 function kirjauduSisaan() {
-  const nimi = document.getElementById('k-nimi').value.trim();
+  const nimi  = document.getElementById('k-nimi').value.trim();
   const koodi = document.getElementById('k-koodi').value.trim();
   if (!nimi) { flash('kirjaudu-flash','Anna nimesi.',true); return; }
   if (TIIMI_KOODI && koodi !== TIIMI_KOODI) { flash('kirjaudu-flash','Väärä tiimiläisten koodi.',true); return; }
@@ -288,19 +382,15 @@ function kirjauduUlos() {
   nayta('kirjaudu');
 }
 function irrota() {
-  if (havantoRef && havantoListener) {
-    havantoRef.off('value', havantoListener);
-  }
+  if (havantoRef && havantoListener) havantoRef.off('value', havantoListener);
   havantoRef = null;
   havantoListener = null;
 }
 
-// ══════════════════════════════════════════════════════════════════
-// OTTELUT
-// ══════════════════════════════════════════════════════════════════
+// ── Ottelut ────────────────────────────────────────────────────
 function luoOttelu() {
   const vastustaja = document.getElementById('uusi-vastustaja').value.trim();
-  const pvm = document.getElementById('uusi-pvm').value.trim() || tanaanPvm();
+  const pvm  = document.getElementById('uusi-pvm').value.trim() || tanaanPvm();
   const sarja = document.getElementById('uusi-sarja').value;
   const nimi = vastustaja ? vastustaja+' '+pvm : 'Ottelu '+pvm;
   const id = nimi.replace(/\s+/g,'_').replace(/[/.]/g,'')+'_'+Date.now();
@@ -312,20 +402,14 @@ function avaaOttelu(id, nimi) {
   irrota();
   currentOtteluId = id;
   havainnot = [];
-  tulostila = 'epasela';
+  resetSyotto();
   document.getElementById('syotto-otsikko').textContent = nimi;
   document.getElementById('syotto-sub').textContent = 'Ladataan...';
-  document.getElementById('btn-meni').classList.remove('valittu');
-  document.getElementById('btn-ei').classList.remove('valittu');
-  document.getElementById('kuvaus-input').value = '';
   nayta('syotto');
   havantoRef = db.ref('havainnot/'+id);
   havantoListener = havantoRef.on('value', snap => {
     havainnot = [];
-    snap.forEach(c => {
-      const v = c.val();
-      if (v) havainnot.push({id: c.key, ...v});
-    });
+    snap.forEach(c => { const v=c.val(); if(v) havainnot.push({id:c.key,...v}); });
     renderHavainnot();
     document.getElementById('syotto-sub').textContent = havainnot.length + ' havaintoa';
   });
@@ -369,7 +453,7 @@ function avaaAnalyysiSuoraan(id, nimi) {
   document.getElementById('analyysi-back').onclick = naytaEtusivu;
   nayta('analyysi');
   document.getElementById('analyysi-content').innerHTML = '<div class="spinner">Ladataan...</div>';
-  db.ref('havainnot/'+id).orderByKey().once('value', snap => {
+  db.ref('havainnot/'+id).once('value', snap => {
     havainnot = [];
     snap.forEach(c => havainnot.push({id:c.key,...c.val()}));
     renderAnalyysi();
@@ -390,71 +474,146 @@ function avaaAnalyysiKaikki() {
   });
 }
 
-// ══════════════════════════════════════════════════════════════════
-// HAVAINNOT: TALLENNUS
-// ══════════════════════════════════════════════════════════════════
+// ── Position selectors ─────────────────────────────────────────
+function valitsePos(arm, kentta, arvo) {
+  if (arm === 'fa') viuhka[kentta]    = arvo;
+  else              vapaaKasi[kentta] = arvo;
+
+  const group = arm+'-'+kentta;
+  document.querySelectorAll(`[data-g="${group}"]`).forEach(b => b.classList.remove('sel-fa','sel-vk'));
+  const btn = document.querySelector(`[data-g="${group}"][data-v="${arvo}"]`);
+  if (btn) btn.classList.add(arm === 'fa' ? 'sel-fa' : 'sel-vk');
+  updateFigure();
+}
+
+function updateFigure() {
+  updateArm('fa', viuhka.puoli,    viuhka.korkeus,    viuhka.ote,
+            '#4f8ef7', {rystyset:'#f75757', peukalo:'#f7e14f', ei_nay:null},
+            {x:76, y:120});
+  updateArm('vk', vapaaKasi.puoli, vapaaKasi.korkeus, vapaaKasi.asento,
+            '#f7a34f', {auki:'#4fcf7a', nyrkki:'#f75757', ei_nay:null},
+            {x:144, y:120});
+}
+
+function updateArm(id, puoli, korkeus, grip, armColor, gripColors, dflt) {
+  const line = document.getElementById(id+'-line');
+  const dot  = document.getElementById(id+'-dot');
+  if (!line || !dot) return;
+
+  const hasPos = puoli && korkeus;
+  const coords = hasPos ? (ARM_COORDS[puoli+'_'+korkeus] || dflt) : dflt;
+
+  line.setAttribute('x1', ARM_ORIGIN.x);
+  line.setAttribute('y1', ARM_ORIGIN.y);
+  line.setAttribute('x2', coords.x);
+  line.setAttribute('y2', coords.y);
+  line.setAttribute('stroke', armColor);
+  line.setAttribute('opacity', hasPos ? '1' : '0.22');
+
+  if (hasPos) {
+    const dotColor = gripColors[grip] || armColor;
+    dot.setAttribute('cx', coords.x);
+    dot.setAttribute('cy', coords.y);
+    dot.setAttribute('r',  grip && grip !== 'ei_nay' ? '9' : '6');
+    dot.setAttribute('fill', dotColor || armColor);
+    dot.setAttribute('opacity', '1');
+  } else {
+    dot.setAttribute('r', '0');
+  }
+}
+
+// ── Havainto: tallennus ────────────────────────────────────────
 function valitseMeni(val) {
   tulostila = val;
   document.getElementById('btn-meni').classList.toggle('valittu', val !== 'pois');
-  document.getElementById('btn-ei').classList.toggle('valittu', val === 'pois');
+  document.getElementById('btn-ei').classList.toggle('valittu',   val === 'pois');
 }
 
 function tallennaHavainto() {
   if (!currentOtteluId) return;
   if (tulostila === 'epasela') {
-    flash('tallenna-flash', 'Valitse ensin MENI tai EI MENNYT.', true);
+    flash('tallenna-flash','Valitse ensin MENI tai EI MENNYT.',true);
     return;
   }
-  db.ref('havainnot/'+currentOtteluId).push({
-    tulos: tulostila,
-    kuvaus: document.getElementById('kuvaus-input').value.trim(),
-    luotu: new Date().toISOString(),
-    kirjaaja: kayttaja,
-  }).then(() => {
-    tulostila = 'epasela';
-    document.getElementById('btn-meni').classList.remove('valittu');
-    document.getElementById('btn-ei').classList.remove('valittu');
-    document.getElementById('kuvaus-input').value = '';
-    flash('tallenna-flash', '✅ Tallennettu!', false);
+  const data = {
+    tulos:          tulostila,
+    kuvaus:         document.getElementById('kuvaus-input').value.trim(),
+    viuhka_puoli:   viuhka.puoli,
+    viuhka_korkeus: viuhka.korkeus,
+    viuhka_ote:     viuhka.ote,
+    vapaa_puoli:    vapaaKasi.puoli,
+    vapaa_korkeus:  vapaaKasi.korkeus,
+    vapaa_asento:   vapaaKasi.asento,
+    luotu:          new Date().toISOString(),
+    kirjaaja:       kayttaja,
+  };
+  db.ref('havainnot/'+currentOtteluId).push(data).then(() => {
+    resetSyotto();
+    flash('tallenna-flash','✅ Tallennettu!', false);
   });
 }
 
-// ══════════════════════════════════════════════════════════════════
-// HAVAINNOT: LISTAUS
-// ══════════════════════════════════════════════════════════════════
+function resetSyotto() {
+  tulostila = 'epasela';
+  viuhka    = {puoli:'', korkeus:'', ote:''};
+  vapaaKasi = {puoli:'', korkeus:'', asento:''};
+  const bi = document.getElementById('btn-meni');
+  const be = document.getElementById('btn-ei');
+  const ki = document.getElementById('kuvaus-input');
+  if (bi) bi.classList.remove('valittu');
+  if (be) be.classList.remove('valittu');
+  if (ki) ki.value = '';
+  document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('sel-fa','sel-vk'));
+  updateFigure();
+}
+
+// ── Havainto: listaus ──────────────────────────────────────────
+function posStrH(h) {
+  const fa = (h.viuhka_puoli && h.viuhka_korkeus)
+    ? `🔵 ${PL[h.viuhka_puoli]||h.viuhka_puoli} ${KL[h.viuhka_korkeus]||h.viuhka_korkeus}${h.viuhka_ote && h.viuhka_ote!=='ei_nay'?' · '+OL[h.viuhka_ote]:''}`
+    : null;
+  const vk = (h.vapaa_puoli && h.vapaa_korkeus)
+    ? `🟠 ${PL[h.vapaa_puoli]||h.vapaa_puoli} ${KL[h.vapaa_korkeus]||h.vapaa_korkeus}${h.vapaa_asento && h.vapaa_asento!=='ei_nay'?' · '+AL[h.vapaa_asento]:''}`
+    : null;
+  return [fa, vk].filter(Boolean).join('  ');
+}
+
 function renderHavainnot() {
-  const card = document.getElementById('havainnot-card');
+  const card  = document.getElementById('havainnot-card');
   const lista = document.getElementById('havainnot-lista');
   if (!havainnot.length) { card.style.display = 'none'; return; }
   card.style.display = '';
-  document.getElementById('havainnot-otsikko').textContent =
-    'Tallennetut havainnot (' + havainnot.length + ')';
+  document.getElementById('havainnot-otsikko').textContent = 'Tallennetut havainnot ('+havainnot.length+')';
 
   lista.innerHTML = [...havainnot].reverse().map(h => {
     const meni = MENI_TULOKSET.has(h.tulos);
-    const tuntematon = !meni && h.tulos !== 'pois';
-    const cls = meni ? 'badge-meni' : tuntematon ? 'badge-muted' : 'badge-pois';
-    const label = meni ? '✅ meni' : tuntematon ? '❓' : '❌ ei';
-    const teksti = h.kuvaus || '<span class="muted">Ei kuvausta</span>';
+    const cls   = meni ? 'badge-meni' : h.tulos === 'pois' ? 'badge-pois' : 'badge-muted';
+    const label = meni ? '✅ meni' : h.tulos === 'pois' ? '❌ ei' : '❓';
+    const pos   = posStrH(h);
     return `<div class="havainto-rivi">
       <span class="badge ${cls}" style="margin-top:2px">${label}</span>
-      <span class="havainto-teksti">${h.kuvaus ? esc(h.kuvaus) : '<span class=\'muted\'>Ei kuvausta</span>'}</span>
+      <span class="havainto-teksti">
+        ${pos ? `<span style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:2px">${pos}</span>` : ''}
+        ${h.kuvaus ? esc(h.kuvaus) : '<span class="muted" style="font-size:.82rem">Ei tekstikuvausta</span>'}
+      </span>
       <button class="havainto-muokkaa" onclick="avaaModal('${h.id}')">muokkaa</button>
     </div>`;
   }).join('');
 }
 
-// ══════════════════════════════════════════════════════════════════
-// MUOKKAUSMODAALI
-// ══════════════════════════════════════════════════════════════════
+// ── Muokkausmodaali ────────────────────────────────────────────
 function avaaModal(havaintoId) {
   const h = havainnot.find(x => x.id === havaintoId);
   if (!h) return;
   modalTulos = h.tulos;
-  document.getElementById('modal-id').value = havaintoId;
+  document.getElementById('modal-id').value    = havaintoId;
   document.getElementById('modal-kuvaus').value = h.kuvaus || '';
   document.getElementById('modal-btn-meni').classList.toggle('valittu', MENI_TULOKSET.has(h.tulos));
-  document.getElementById('modal-btn-ei').classList.toggle('valittu', h.tulos === 'pois');
+  document.getElementById('modal-btn-ei').classList.toggle('valittu',   h.tulos === 'pois');
+  const pos = posStrH(h);
+  document.getElementById('modal-asennot').innerHTML = pos
+    ? '<span style="font-size:.78rem">'+pos+'</span>'
+    : '<span style="color:var(--muted);font-size:.78rem">Asentoja ei kirjattu</span>';
   document.getElementById('modal-bg').classList.remove('hidden');
 }
 
@@ -466,14 +625,14 @@ function suljeModal(e) {
 function modalValitseMeni(val) {
   modalTulos = val;
   document.getElementById('modal-btn-meni').classList.toggle('valittu', val !== 'pois');
-  document.getElementById('modal-btn-ei').classList.toggle('valittu', val === 'pois');
+  document.getElementById('modal-btn-ei').classList.toggle('valittu',   val === 'pois');
 }
 
 function tallennaModal() {
   const id = document.getElementById('modal-id').value;
   if (!id || !currentOtteluId) return;
   db.ref('havainnot/'+currentOtteluId+'/'+id).update({
-    tulos: modalTulos,
+    tulos:  modalTulos,
     kuvaus: document.getElementById('modal-kuvaus').value.trim(),
   }).then(() => { document.getElementById('modal-bg').classList.add('hidden'); });
 }
@@ -486,151 +645,38 @@ function poistaModal() {
     .then(() => { document.getElementById('modal-bg').classList.add('hidden'); });
 }
 
-// ══════════════════════════════════════════════════════════════════
-// ANALYYSI
-// ══════════════════════════════════════════════════════════════════
-function kopioimAAnalyysiin() {
-  const meniH = havainnot.filter(h => MENI_TULOKSET.has(h.tulos) && h.kuvaus);
-  const poisH = havainnot.filter(h => h.tulos === 'pois' && h.kuvaus);
-
-  if (meniH.length + poisH.length < 2) {
-    alert('Lisää ensin kuvauksia havaintoihin ennen analyysiä.');
-    return;
-  }
-
-  const meniRivit = meniH.map((h,i) => `${i+1}. ${h.kuvaus}`).join('\n');
-  const poisRivit = poisH.map((h,i) => `${i+1}. ${h.kuvaus}`).join('\n');
-
-  const prompt = `Olet pesäpallon merkkikielen analysoija. Alla on havaintoja ottelusta, joissa etenijä joko lähti pesältä (MENI) tai ei lähtenyt (EI MENNYT). Jokainen havainto on analysoijan vapaa kuvaus siitä mitä pelinjohtaja teki — viuhkan asento, käden asento, sijainti jne.
-
-Tehtäväsi: selvitä mikä on vastustajan lähtemismerkki. Etsi toistuvia piirteitä MENI-ryhmässä jotka puuttuvat EI MENNYT -ryhmästä tai päinvastoin. Huomioi myös yhdistelmät (esim. viuhkan asento + käden asento yhdessä).
-
-=== MENI — etenijä lähti (${meniH.length} havaintoa) ===
-${meniRivit || '(ei kuvauksia)'}
-
-=== EI MENNYT — etenijä ei lähtenyt (${poisH.length} havaintoa) ===
-${poisRivit || '(ei kuvauksia)'}
-
-Vastaa suomeksi. Anna selkeä analyysi: mikä näyttää olevan lähtemismerkki, mitkä piirteet erottavat ryhmät toisistaan, ja kuinka varma olet johtopäätöksestä?`;
-
-  navigator.clipboard.writeText(prompt).then(() => {
-    const btn = document.getElementById('kopioi-btn');
-    btn.textContent = '✅ Kopioitu! Liitä claude.ai-chattiin';
-    btn.style.background = 'rgba(79,207,122,.15)';
-    btn.style.borderColor = 'var(--success)';
-    btn.style.color = 'var(--success)';
-    setTimeout(() => {
-      btn.textContent = '🤖 Kopioi Claude AI -analyysiin';
-      btn.style.background = '';
-      btn.style.borderColor = '';
-      btn.style.color = '';
-    }, 4000);
-  }).catch(() => {
-    // Fallback jos clipboard ei toimi
-    prompt_fallback(prompt);
+// ── Analyysi ───────────────────────────────────────────────────
+function posAnalyysi(hvt) {
+  const stats = {};
+  const add = (type, puoli, korkeus, grip, isMeni) => {
+    if (!puoli || !korkeus) return;
+    const k = type+'_'+puoli+'_'+korkeus+'_'+(grip||'');
+    if (!stats[k]) stats[k] = {type, puoli, korkeus, grip:grip||'', meni:0, pois:0};
+    if (isMeni) stats[k].meni++; else stats[k].pois++;
+  };
+  hvt.forEach(h => {
+    const meni = MENI_TULOKSET.has(h.tulos);
+    const pois = h.tulos === 'pois';
+    if (!meni && !pois) return;
+    add('FA', h.viuhka_puoli, h.viuhka_korkeus, h.viuhka_ote,    meni);
+    add('VK', h.vapaa_puoli,  h.vapaa_korkeus,  h.vapaa_asento,  meni);
   });
+  return Object.values(stats)
+    .filter(s => s.meni+s.pois >= 2)
+    .map(s => ({...s, n:s.meni+s.pois, mp:Math.round(s.meni/(s.meni+s.pois)*100)}))
+    .sort((a,b) => Math.abs(b.mp-50)-Math.abs(a.mp-50));
 }
 
-function prompt_fallback(teksti) {
-  const ta = document.createElement('textarea');
-  ta.value = teksti;
-  ta.style.position = 'fixed';
-  ta.style.opacity = '0';
-  document.body.appendChild(ta);
-  ta.select();
-  document.execCommand('copy');
-  document.body.removeChild(ta);
-  const btn = document.getElementById('kopioi-btn');
-  btn.textContent = '✅ Kopioitu!';
-  setTimeout(() => { btn.textContent = '🤖 Kopioi Claude AI -analyysiin'; }, 3000);
-}
-
-function renderAnalyysi() {
-  const el = document.getElementById('analyysi-content');
-  if (!havainnot.length) {
-    el.innerHTML = '<div class="card" style="text-align:center;color:var(--muted);padding:32px">Ei havaintoja analysoitavaksi.</div>';
-    return;
-  }
-
-  const meniH = havainnot.filter(h => MENI_TULOKSET.has(h.tulos));
-  const poisH = havainnot.filter(h => h.tulos === 'pois');
-  const total  = havainnot.length;
-  const teksti = tekstianalyysi(havainnot);
-
-  el.innerHTML = `
-    <!-- AI-analyysi nappi -->
-    <div class="card" style="text-align:center;padding:20px">
-      <div style="font-size:1.5rem;margin-bottom:8px">🤖</div>
-      <p style="font-size:.9rem;margin-bottom:14px;color:var(--text)">
-        Kopioi havainnot valmiina kysymyksenä Claude AI:lle.<br>
-        <span class="muted" style="font-size:.82rem">Liitä teksti claude.ai-chattiin → saat tulkinnan.</span>
-      </p>
-      <button id="kopioi-btn" class="btn btn-full" style="font-size:1rem;padding:14px;border-color:var(--accent);color:var(--accent)"
-        onclick="kopioimAAnalyysiin()">🤖 Kopioi Claude AI -analyysiin</button>
-      <div style="margin-top:10px">
-        <a href="https://claude.ai" target="_blank" class="muted" style="font-size:.8rem">Avaa claude.ai →</a>
-      </div>
-    </div>
-
-    <!-- Luvut -->
-    <div class="card">
-      <div class="card-title">Yhteenveto</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div class="stat-box">
-          <div class="stat-num">${total}</div>
-          <div class="stat-lbl">HAVAINTOA</div>
-        </div>
-        <div class="stat-box" style="background:rgba(79,207,122,.1)">
-          <div class="stat-num" style="color:var(--success)">${meniH.length}</div>
-          <div class="stat-lbl">MENI</div>
-        </div>
-        <div class="stat-box" style="background:rgba(247,87,87,.1)">
-          <div class="stat-num" style="color:var(--danger)">${poisH.length}</div>
-          <div class="stat-lbl">EI MENNYT</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tekstianalyysi -->
-    <div class="card">
-      <div class="card-title">🔍 Merkin tunnistus</div>
-      ${teksti.length < 1 ? `
-        <p class="muted" style="font-size:.9rem">Lisää enemmän havaintoja molemmista ryhmistä (meni + ei mennyt) jotta analyysi toimii.</p>
-      ` : `
-        <p class="muted" style="font-size:.83rem;margin-bottom:12px;line-height:1.5">
-          Ohjelma on laskenut mitkä sanat ja ilmaisut esiintyvät useammin <strong style="color:var(--success)">meni</strong>-tilanteissa
-          kuin <strong style="color:var(--danger)">ei mennyt</strong> -tilanteissa.
-          Mitä kauempana 50% on, sitä enemmän termi erottaa nämä tilanteet toisistaan.
-        </p>
-        <table>
-          <tr>
-            <th>Termi</th>
-            <th>Meni%</th>
-            <th>Esiintymiä</th>
-            <th></th>
-          </tr>
-          ${teksti.slice(0,30).map(t => `<tr>
-            <td style="font-weight:600">${esc(t.termi)}</td>
-            <td style="color:${t.mp>=60?'var(--success)':t.mp<=40?'var(--danger)':'var(--text)'};font-weight:700">${t.mp}%</td>
-            <td class="muted">${t.n}</td>
-            <td>
-              <div class="bar-wrap">
-                <div class="bar" style="width:${t.mp}%;background:${t.mp>=50?'var(--success)':'var(--danger)'}"></div>
-              </div>
-            </td>
-          </tr>`).join('')}
-        </table>
-        <p class="muted" style="font-size:.78rem;margin-top:10px">
-          Vihreä = esiintyy enemmän meni-tilanteissa · Punainen = esiintyy enemmän ei mennyt -tilanteissa
-        </p>
-      `}
-    </div>
-  `;
+function posLabel(s) {
+  const icon = s.type === 'FA' ? '🔵' : '🟠';
+  const gripMap = s.type === 'FA' ? OL : AL;
+  const grip = (s.grip && s.grip !== 'ei_nay' && gripMap[s.grip]) ? ' · '+gripMap[s.grip] : '';
+  return `${icon} ${PL[s.puoli]||s.puoli} ${KL[s.korkeus]||s.korkeus}${grip}`;
 }
 
 function tekstianalyysi(hvt) {
   const stop = new Set(['on','ei','ja','se','että','kun','oli','tai','ole','hän','ne','tämä','tuo',
-    'siinä','kaikki','joka','mitä','vaan','myös','siis','mutta','niin','olla','olen','siitä','on']);
+    'siinä','kaikki','joka','mitä','vaan','myös','siis','mutta','niin','olla','olen','siitä']);
   const meniH = hvt.filter(h => MENI_TULOKSET.has(h.tulos) && h.kuvaus);
   const poisH = hvt.filter(h => h.tulos === 'pois' && h.kuvaus);
   if (meniH.length < 2 || poisH.length < 2) return [];
@@ -653,15 +699,161 @@ function tekstianalyysi(hvt) {
   return res.sort((a,b) => Math.abs(b.mp-50)-Math.abs(a.mp-50)).slice(0,40);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// APUFUNKTIOT
-// ══════════════════════════════════════════════════════════════════
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function tanaanPvm(){const d=new Date();return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear();}
-function flash(id,teksti,virhe){
-  const el=document.getElementById(id);if(!el)return;
-  el.innerHTML=`<div class="flash ${virhe?'flash-err':'flash-ok'}">${esc(teksti)}</div>`;
-  if(!virhe)setTimeout(()=>{el.innerHTML='';},2500);
+function kopioimAAnalyysiin() {
+  const meniH = havainnot.filter(h => MENI_TULOKSET.has(h.tulos));
+  const poisH = havainnot.filter(h => h.tulos === 'pois');
+  if (meniH.length + poisH.length < 2) {
+    alert('Lisää ensin havaintoja ennen analyysiä.');
+    return;
+  }
+  const fmtH = h => {
+    const pos = posStrH(h);
+    const txt = h.kuvaus || '';
+    return [pos, txt].filter(Boolean).join(' | ');
+  };
+  const meniRivit = meniH.map((h,i) => `${i+1}. ${fmtH(h)}`).join('\n');
+  const poisRivit = poisH.map((h,i) => `${i+1}. ${fmtH(h)}`).join('\n');
+
+  const prompt = `Olet pesäpallon merkkikielen analysoija. Alla on havaintoja ottelusta, joissa etenijä joko lähti pesältä (MENI) tai ei lähtenyt (EI MENNYT). Jokainen havainto sisältää kirjatun asennon (viuhka 🔵 ja vapaa käsi 🟠) sekä mahdollisen vapaan kuvauksen.
+
+Asennon merkinnät: Lähtöpesä/Edessä/Menopesä = missä käsi on sivusuunnassa · ylh./keski/alh. = korkeus · rystyset/peukalo = viuhkaote · auki/nyrkki = vapaan käden asento.
+
+Tehtäväsi: selvitä mikä on vastustajan lähtemismerkki. Etsi toistuvia yhdistelmiä MENI-ryhmässä jotka puuttuvat EI MENNYT -ryhmästä. Huomioi erityisesti viuhkan puoli+korkeus+ote -yhdistelmä ja vapaan käden asento yhdessä.
+
+=== MENI — etenijä lähti (${meniH.length} havaintoa) ===
+${meniRivit || '(ei havaintoja)'}
+
+=== EI MENNYT — etenijä ei lähtenyt (${poisH.length} havaintoa) ===
+${poisRivit || '(ei havaintoja)'}
+
+Vastaa suomeksi. Anna selkeä analyysi: mikä näyttää olevan lähtemismerkki, mitkä piirteet erottavat ryhmät toisistaan, ja kuinka varma olet johtopäätöksestä?`;
+
+  navigator.clipboard.writeText(prompt).then(() => {
+    const btn = document.getElementById('kopioi-btn');
+    btn.textContent = '✅ Kopioitu! Liitä claude.ai-chattiin';
+    btn.style.background   = 'rgba(79,207,122,.15)';
+    btn.style.borderColor  = 'var(--success)';
+    btn.style.color        = 'var(--success)';
+    setTimeout(() => {
+      btn.textContent = '🤖 Kopioi Claude AI -analyysiin';
+      btn.style.background = btn.style.borderColor = btn.style.color = '';
+    }, 4000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = prompt;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('kopioi-btn');
+    btn.textContent = '✅ Kopioitu!';
+    setTimeout(() => { btn.textContent = '🤖 Kopioi Claude AI -analyysiin'; }, 3000);
+  });
+}
+
+function renderAnalyysi() {
+  const el = document.getElementById('analyysi-content');
+  if (!havainnot.length) {
+    el.innerHTML = '<div class="card" style="text-align:center;color:var(--muted);padding:32px">Ei havaintoja analysoitavaksi.</div>';
+    return;
+  }
+  const meniH  = havainnot.filter(h => MENI_TULOKSET.has(h.tulos));
+  const poisH  = havainnot.filter(h => h.tulos === 'pois');
+  const total  = havainnot.length;
+  const teksti = tekstianalyysi(havainnot);
+  const posPat = posAnalyysi(havainnot);
+
+  const posTbl = posPat.length ? `
+    <div class="card">
+      <div class="card-title">📍 Asentokuviot</div>
+      <p class="muted" style="font-size:.83rem;margin-bottom:12px;line-height:1.5">
+        Mitkä viuhkan/vapaan käden asennot esiintyvät eniten <strong style="color:var(--success)">meni</strong>-
+        tai <strong style="color:var(--danger)">ei mennyt</strong> -tilanteissa.
+      </p>
+      <table>
+        <tr><th>Asento</th><th>Meni%</th><th>n</th><th></th></tr>
+        ${posPat.slice(0,20).map(s => `<tr>
+          <td style="font-size:.82rem">${posLabel(s)}</td>
+          <td style="color:${s.mp>=60?'var(--success)':s.mp<=40?'var(--danger)':'var(--text)'};font-weight:700">${s.mp}%</td>
+          <td class="muted">${s.n}</td>
+          <td><div class="bar-wrap"><div class="bar" style="width:${s.mp}%;background:${s.mp>=50?'var(--success)':'var(--danger)'}"></div></div></td>
+        </tr>`).join('')}
+      </table>
+    </div>` : '';
+
+  const tekstiTbl = teksti.length ? `
+    <div class="card">
+      <div class="card-title">🔍 Tekstianalyysi</div>
+      <p class="muted" style="font-size:.83rem;margin-bottom:12px;line-height:1.5">
+        Sanat ja ilmaisut jotka erottavat meni/ei mennyt -tilanteita.
+      </p>
+      <table>
+        <tr><th>Termi</th><th>Meni%</th><th>n</th><th></th></tr>
+        ${teksti.slice(0,20).map(t => `<tr>
+          <td style="font-weight:600">${esc(t.termi)}</td>
+          <td style="color:${t.mp>=60?'var(--success)':t.mp<=40?'var(--danger)':'var(--text)'};font-weight:700">${t.mp}%</td>
+          <td class="muted">${t.n}</td>
+          <td><div class="bar-wrap"><div class="bar" style="width:${t.mp}%;background:${t.mp>=50?'var(--success)':'var(--danger)'}"></div></div></td>
+        </tr>`).join('')}
+      </table>
+    </div>` : '';
+
+  el.innerHTML = `
+    <div class="card" style="text-align:center;padding:20px">
+      <div style="font-size:1.5rem;margin-bottom:8px">🤖</div>
+      <p style="font-size:.9rem;margin-bottom:14px">
+        Kopioi havainnot valmiina kysymyksenä Claude AI:lle.<br>
+        <span class="muted" style="font-size:.82rem">Liitä teksti claude.ai-chattiin → saat tulkinnan.</span>
+      </p>
+      <button id="kopioi-btn" class="btn btn-full" style="font-size:1rem;padding:14px;border-color:var(--accent);color:var(--accent)"
+        onclick="kopioimAAnalyysiin()">🤖 Kopioi Claude AI -analyysiin</button>
+      <div style="margin-top:10px">
+        <a href="https://claude.ai" target="_blank" class="muted" style="font-size:.8rem">Avaa claude.ai →</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Yhteenveto</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div class="stat-box">
+          <div class="stat-num">${total}</div>
+          <div class="stat-lbl">HAVAINTOA</div>
+        </div>
+        <div class="stat-box" style="background:rgba(79,207,122,.1)">
+          <div class="stat-num" style="color:var(--success)">${meniH.length}</div>
+          <div class="stat-lbl">MENI</div>
+        </div>
+        <div class="stat-box" style="background:rgba(247,87,87,.1)">
+          <div class="stat-num" style="color:var(--danger)">${poisH.length}</div>
+          <div class="stat-lbl">EI MENNYT</div>
+        </div>
+      </div>
+    </div>
+
+    ${posTbl}
+    ${tekstiTbl}
+
+    ${!posPat.length && !teksti.length ? `
+    <div class="card" style="text-align:center;color:var(--muted);padding:24px">
+      <p style="font-size:.9rem">Kirjaa enemmän havaintoja molemmista ryhmistä (meni + ei mennyt) jotta tilastot toimivat.</p>
+    </div>` : ''}
+  `;
+}
+
+// ── Apufunktiot ────────────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function tanaanPvm() {
+  const d = new Date();
+  return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear();
+}
+function flash(id, teksti, virhe) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = `<div class="flash ${virhe?'flash-err':'flash-ok'}">${esc(teksti)}</div>`;
+  if (!virhe) setTimeout(() => { el.innerHTML = ''; }, 2500);
 }
 </script>
 </body>
