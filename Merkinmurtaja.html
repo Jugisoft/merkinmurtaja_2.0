@@ -599,13 +599,25 @@ function naytaKaikkiKirjaukset() {
 
     const perOttelu = {};
     let totalHav = 0;
+    const havaintoAvaimet = [];
     havSnap.forEach(ot => {
       perOttelu[ot.key] = [];
+      havaintoAvaimet.push(ot.key);
       ot.forEach(c => { perOttelu[ot.key].push({id:c.key,...c.val()}); totalHav++; });
     });
+    const otteluAvaimet = ottelut.map(o => o.id);
 
     document.getElementById('kaikki-sub').textContent =
       ottelut.length+' ottelua · '+totalHav+' havaintoa';
+
+    // DEBUG: näytä avaimet jos mismatch
+    const debugHtml = (havaintoAvaimet.length || otteluAvaimet.length) ? `
+      <div class="card" style="font-size:.72rem;color:var(--muted);word-break:break-all;margin-bottom:8px">
+        <div style="margin-bottom:4px"><b>ottelut/ avaimet:</b></div>
+        ${otteluAvaimet.map(k=>`<div style="padding:2px 0">${esc(k)}</div>`).join('')}
+        <div style="margin:6px 0 4px"><b>havainnot/ avaimet:</b></div>
+        ${havaintoAvaimet.map(k=>`<div style="padding:2px 0">${esc(k)}</div>`).join('')}
+      </div>` : '';
 
     if (!ottelut.length) {
       document.getElementById('kaikki-content').innerHTML =
@@ -613,7 +625,7 @@ function naytaKaikkiKirjaukset() {
       return;
     }
 
-    document.getElementById('kaikki-content').innerHTML = ottelut.map(o => {
+    document.getElementById('kaikki-content').innerHTML = debugHtml + ottelut.map(o => {
       const havs      = perOttelu[o.id] || [];
       const meniCount = havs.filter(h => MENI_TULOKSET.has(h.tulos)).length;
       const poisCount = havs.filter(h => h.tulos === 'pois').length;
