@@ -351,7 +351,10 @@ details[open]>summary::after{content:'▾'}
       <div class="topbar-title">📋 Kaikki kirjaukset</div>
       <div class="topbar-sub" id="kaikki-sub"></div>
     </div>
-    <button class="btn btn-ghost" style="padding:6px 10px;font-size:.75rem" onclick="naytaEtusivu()">← Koti</button>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-ghost" style="padding:6px 10px;font-size:.75rem" onclick="naytaKaikkiKirjaukset()">↻ Päivitä</button>
+      <button class="btn btn-ghost" style="padding:6px 10px;font-size:.75rem" onclick="naytaEtusivu()">← Koti</button>
+    </div>
   </div>
   <div class="content" id="kaikki-content"><div class="spinner">Ladataan...</div></div>
 </div>
@@ -549,9 +552,10 @@ function avaaOttelu(id, nimi) {
 function lataaOttelut() {
   const lista = document.getElementById('ottelut-lista');
   lista.innerHTML = '<div class="spinner">Ladataan...</div>';
-  db.ref('ottelut').orderByChild('luotu').once('value', snap => {
+  db.ref('ottelut').once('value', snap => {
     const ot = [];
     snap.forEach(c => ot.unshift({id:c.key,...c.val()}));
+    ot.sort((a,b) => (b.luotu||'') < (a.luotu||'') ? -1 : 1);
     if (!ot.length) {
       lista.innerHTML = '<div class="card" style="text-align:center;color:var(--muted);padding:32px">Ei vielä otteluita.</div>';
       return;
@@ -574,6 +578,10 @@ function lataaOttelut() {
           <button class="btn btn-full" style="border-color:var(--accent);color:var(--accent)"
             onclick="avaaAnalyysiKaikki()">🔍 Analysoi kaikki yhdistettynä</button></div>`
       + '</div>';
+  }, err => {
+    lista.innerHTML = '<div class="card" style="color:var(--danger);padding:24px">'
+      +'<b>Firebase-virhe:</b> '+esc(err.message)
+      +'<br><br><button class="btn btn-ghost" onclick="lataaOttelut()">Yritä uudelleen</button></div>';
   });
 }
 
@@ -587,6 +595,7 @@ function naytaKaikkiKirjaukset() {
   ]).then(([otSnap, havSnap]) => {
     const ottelut = [];
     otSnap.forEach(c => ottelut.unshift({id:c.key,...c.val()}));
+    ottelut.sort((a,b) => (b.luotu||'') < (a.luotu||'') ? -1 : 1);
 
     const perOttelu = {};
     let totalHav = 0;
@@ -647,6 +656,11 @@ function naytaKaikkiKirjaukset() {
         </details>
       </div>`;
     }).join('');
+  }).catch(err => {
+    document.getElementById('kaikki-content').innerHTML =
+      '<div class="card" style="color:var(--danger);padding:24px">'
+      +'<b>Firebase-virhe:</b> '+esc(err.message)
+      +'<br><br><button class="btn btn-ghost" onclick="naytaKaikkiKirjaukset()">Yritä uudelleen</button></div>';
   });
 }
 
