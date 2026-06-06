@@ -135,6 +135,8 @@ details[open]>summary::after{content:'▾'}
       </select>
       <button class="btn btn-primary btn-full btn-lg" style="margin-top:12px" onclick="luoOttelu()">Aloita kirjaus</button>
     </div>
+    <button class="btn btn-full btn-lg" style="border-color:var(--success);color:var(--success);margin-bottom:12px"
+      onclick="naytaKaikkiKirjaukset()">📋 Kaikki ottelut ja havainnot</button>
     <div id="ottelut-lista"></div>
   </div>
 </div>
@@ -340,6 +342,18 @@ details[open]>summary::after{content:'▾'}
     </div>
 
   </div>
+</div>
+
+<!-- ══ KAIKKI KIRJAUKSET ══════════════════════════════════════════ -->
+<div id="view-kaikki" class="view">
+  <div class="topbar">
+    <div style="overflow:hidden">
+      <div class="topbar-title">📋 Kaikki kirjaukset</div>
+      <div class="topbar-sub" id="kaikki-sub"></div>
+    </div>
+    <button class="btn btn-ghost" style="padding:6px 10px;font-size:.75rem" onclick="naytaEtusivu()">← Koti</button>
+  </div>
+  <div class="content" id="kaikki-content"><div class="spinner">Ladataan...</div></div>
 </div>
 
 <!-- ══ ANALYYSI ═══════════════════════════════════════════════════ -->
@@ -556,10 +570,83 @@ function lataaOttelut() {
               onclick="avaaAnalyysiSuoraan('${o.id}','${esc(o.nimi)}')">📊 Analysoi</button>
           </div>
         </div>`).join('')
-      + (ot.length > 1 ? `<div style="margin-top:12px">
+      + `<div style="margin-top:12px;display:flex;gap:6px">
           <button class="btn btn-full" style="border-color:var(--accent);color:var(--accent)"
-            onclick="avaaAnalyysiKaikki()">🔍 Analysoi kaikki ottelut yhdistettynä</button></div>` : '')
+            onclick="avaaAnalyysiKaikki()">🔍 Analysoi kaikki yhdistettynä</button></div>`
       + '</div>';
+  });
+}
+
+function naytaKaikkiKirjaukset() {
+  irrota();
+  nayta('kaikki');
+  document.getElementById('kaikki-content').innerHTML = '<div class="spinner">Ladataan...</div>';
+  Promise.all([
+    db.ref('ottelut').once('value'),
+    db.ref('havainnot').once('value'),
+  ]).then(([otSnap, havSnap]) => {
+    const ottelut = [];
+    otSnap.forEach(c => ottelut.unshift({id:c.key,...c.val()}));
+
+    const perOttelu = {};
+    let totalHav = 0;
+    havSnap.forEach(ot => {
+      perOttelu[ot.key] = [];
+      ot.forEach(c => { perOttelu[ot.key].push({id:c.key,...c.val()}); totalHav++; });
+    });
+
+    document.getElementById('kaikki-sub').textContent =
+      ottelut.length+' ottelua · '+totalHav+' havaintoa';
+
+    if (!ottelut.length) {
+      document.getElementById('kaikki-content').innerHTML =
+        '<div class="card" style="text-align:center;color:var(--muted);padding:32px">Ei vielä otteluita.</div>';
+      return;
+    }
+
+    document.getElementById('kaikki-content').innerHTML = ottelut.map(o => {
+      const havs      = perOttelu[o.id] || [];
+      const meniCount = havs.filter(h => MENI_TULOKSET.has(h.tulos)).length;
+      const poisCount = havs.filter(h => h.tulos === 'pois').length;
+      const meta      = [o.vastustaja, o.sarja].filter(Boolean).join(' · ');
+
+      const havsHtml = havs.length ? havs.map(h => {
+        const meni = MENI_TULOKSET.has(h.tulos);
+        const cls  = meni ? 'badge-meni' : h.tulos === 'pois' ? 'badge-pois' : 'badge-muted';
+        const lbl  = meni ? '✅' : h.tulos === 'pois' ? '❌' : '❓';
+        const pos  = posStrH(h);
+        const lt   = lisatiedotStr(h);
+        return `<div class="havainto-rivi">
+          <span class="badge ${cls}" style="margin-top:2px">${lbl}</span>
+          <span class="havainto-teksti">
+            ${pos ? `<span style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:1px">${pos}</span>` : ''}
+            ${lt  ? `<span style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:1px">${esc(lt)}</span>` : ''}
+            ${h.kuvaus ? esc(h.kuvaus) : '<span class="muted" style="font-size:.82rem">Ei tekstikuvausta</span>'}
+          </span>
+        </div>`;
+      }).join('') : '<p class="muted" style="font-size:.88rem;padding:12px 0;text-align:center">Ei havaintoja</p>';
+
+      return `<div class="card">
+        <details ${havs.length > 0 && havs.length <= 15 ? 'open' : ''}>
+          <summary>
+            <span style="font-weight:700;font-size:.95rem">${esc(o.nimi)}</span>
+          </summary>
+          ${meta ? `<div class="muted" style="font-size:.8rem;margin:6px 0 8px">${esc(meta)}</div>` : '<div style="margin-top:8px"></div>'}
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <span class="badge badge-meni">✅ ${meniCount} meni</span>
+            <span class="badge badge-pois">❌ ${poisCount} ei</span>
+            <span class="badge badge-muted">${havs.length} yht.</span>
+          </div>
+          ${havsHtml}
+          <div style="display:flex;gap:6px;margin-top:10px">
+            <button class="btn btn-warning" style="flex:1;font-size:.82rem"
+              onclick="avaaAnalyysiSuoraan('${o.id}','${esc(o.nimi)}')">📊 Analyysi</button>
+            <button class="btn btn-ghost" style="flex:1;font-size:.82rem"
+              onclick="avaaOttelu('${o.id}','${esc(o.nimi)}')">✏️ Syötä</button>
+          </div>
+        </details>
+      </div>`;
+    }).join('');
   });
 }
 
