@@ -70,6 +70,11 @@ th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
 .stat-num{font-size:1.8rem;font-weight:800}
 .stat-lbl{font-size:.75rem;color:var(--muted);margin-top:2px}
 .spinner{text-align:center;padding:40px;color:var(--muted)}
+details>summary{cursor:pointer;list-style:none;padding:10px 0;font-size:.85rem;color:var(--muted);user-select:none;display:flex;align-items:center;justify-content:space-between}
+details>summary::-webkit-details-marker{display:none}
+details[open]>summary{color:var(--text);font-weight:600}
+details>summary::after{content:'▸';font-size:.75em;transition:transform .2s}
+details[open]>summary::after{content:'▾'}
 /* Position selector */
 .pos-row{display:flex;gap:5px;margin-bottom:8px}
 .pos-btn{flex:1;padding:8px 3px;border-radius:8px;border:1px solid var(--border);
@@ -235,6 +240,60 @@ th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
         </div>
       </div>
 
+      <details id="lisatiedot-wrap" style="margin-top:2px">
+        <summary>Lisätiedot (valinnainen)</summary>
+        <div style="padding:4px 0 8px">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <div style="flex:1">
+              <div class="sub-lbl">Jakso</div>
+              <select id="lt-jakso">
+                <option value="">—</option>
+                <option>1</option><option>2</option><option>3</option><option>4</option>
+                <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>
+              </select>
+            </div>
+            <div style="flex:1">
+              <div class="sub-lbl">Vuoropari</div>
+              <input type="text" id="lt-vuoropari" placeholder="esim. 1–2">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div style="flex:1">
+              <div class="sub-lbl">Pallot</div>
+              <select id="lt-pallot">
+                <option value="">—</option>
+                <option value="0">0 palloa</option>
+                <option value="1">1 pallo</option>
+                <option value="2">2 palloa</option>
+              </select>
+            </div>
+            <div style="flex:2">
+              <div class="sub-lbl">Lyöjä</div>
+              <input type="text" id="lt-lyoja" placeholder="nimi tai numero">
+            </div>
+          </div>
+          <div class="sub-lbl">Etenijät pesillä</div>
+          <div class="pos-row" style="margin-bottom:10px">
+            <button type="button" class="pos-btn" data-et="1" onclick="toggleEtenija('1')">1-pesällä</button>
+            <button type="button" class="pos-btn" data-et="2" onclick="toggleEtenija('2')">2-pesällä</button>
+            <button type="button" class="pos-btn" data-et="3" onclick="toggleEtenija('3')">3-pesällä</button>
+          </div>
+          <div class="sub-lbl">Värit viuhkassa</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">
+            <button type="button" class="pos-btn" style="flex:none" data-vari="musta"     onclick="toggleVari('musta')"><span style="color:#888">●</span> Musta</button>
+            <button type="button" class="pos-btn" style="flex:none" data-vari="valkoinen" onclick="toggleVari('valkoinen')"><span style="color:#ddd">●</span> Valkoinen</button>
+            <button type="button" class="pos-btn" style="flex:none" data-vari="punainen"  onclick="toggleVari('punainen')"><span style="color:#e53935">●</span> Punainen</button>
+            <button type="button" class="pos-btn" style="flex:none" data-vari="sininen"   onclick="toggleVari('sininen')"><span style="color:#1e88e5">●</span> Sininen</button>
+            <button type="button" class="pos-btn" style="flex:none" data-vari="keltainen" onclick="toggleVari('keltainen')"><span style="color:#fdd835">●</span> Keltainen</button>
+            <button type="button" class="pos-btn" style="flex:none" data-vari="vihrea"    onclick="toggleVari('vihrea')"><span style="color:#43a047">●</span> Vihreä</button>
+            <button type="button" class="pos-btn" style="flex:none" data-vari="oranssi"   onclick="toggleVari('oranssi')"><span style="color:#fb8c00">●</span> Oranssi</button>
+            <button type="button" class="pos-btn" style="flex:none" data-vari="ruskea"    onclick="toggleVari('ruskea')"><span style="color:#a1887f">●</span> Ruskea</button>
+            <button type="button" class="pos-btn" style="flex:none" data-vari="harmaa"    onclick="toggleVari('harmaa')"><span style="color:#9e9e9e">●</span> Harmaa</button>
+            <button type="button" class="pos-btn" style="flex:none" data-vari="violetti"  onclick="toggleVari('violetti')"><span style="color:#ab47bc">●</span> Violetti</button>
+          </div>
+        </div>
+      </details>
+
       <hr>
       <label>Mitä näit? <span class="muted" style="font-weight:400">(vapaa kuvaus, valinnainen)</span></label>
       <textarea id="kuvaus-input" rows="2"
@@ -314,6 +373,8 @@ let modalTulos  = 'epasela';
 // Position state
 let viuhka     = {puoli:'', korkeus:'', ote:''};
 let vapaaKasi  = {puoli:'', korkeus:'', asento:''};
+let ltEtenijat = [];
+let ltVarit    = [];
 
 // SVG arm coordinates (shoulder junction at x=110, y=72 in viewBox 0 0 220 230)
 const ARM_ORIGIN = {x: 110, y: 72};
@@ -482,6 +543,20 @@ function avaaAnalyysiKaikki() {
   });
 }
 
+// ── Lisätiedot toggles ─────────────────────────────────────────
+function toggleEtenija(pesa) {
+  const i = ltEtenijat.indexOf(pesa);
+  if (i >= 0) ltEtenijat.splice(i, 1); else ltEtenijat.push(pesa);
+  document.querySelectorAll('[data-et]').forEach(b =>
+    b.classList.toggle('sel-fa', ltEtenijat.includes(b.dataset.et)));
+}
+function toggleVari(vari) {
+  const i = ltVarit.indexOf(vari);
+  if (i >= 0) ltVarit.splice(i, 1); else ltVarit.push(vari);
+  document.querySelectorAll('[data-vari]').forEach(b =>
+    b.classList.toggle('sel-fa', ltVarit.includes(b.dataset.vari)));
+}
+
 // ── Position selectors ─────────────────────────────────────────
 function valitsePos(arm, kentta, arvo) {
   if (arm === 'fa') viuhka[kentta]    = arvo;
@@ -571,6 +646,12 @@ function tallennaHavainto() {
     vapaa_puoli:    vapaaKasi.puoli,
     vapaa_korkeus:  vapaaKasi.korkeus,
     vapaa_asento:   vapaaKasi.asento,
+    jakso:          document.getElementById('lt-jakso').value,
+    vuoropari:      document.getElementById('lt-vuoropari').value.trim(),
+    pallot:         document.getElementById('lt-pallot').value,
+    lyoja:          document.getElementById('lt-lyoja').value.trim(),
+    etenijat:       ltEtenijat.join(','),
+    varit:          ltVarit.join(','),
     luotu:          new Date().toISOString(),
     kirjaaja:       kayttaja,
   };
@@ -581,20 +662,36 @@ function tallennaHavainto() {
 }
 
 function resetSyotto() {
-  tulostila = 'epasela';
-  viuhka    = {puoli:'', korkeus:'', ote:''};
-  vapaaKasi = {puoli:'', korkeus:'', asento:''};
+  tulostila  = 'epasela';
+  viuhka     = {puoli:'', korkeus:'', ote:''};
+  vapaaKasi  = {puoli:'', korkeus:'', asento:''};
+  ltEtenijat = [];
+  ltVarit    = [];
   const bi = document.getElementById('btn-meni');
   const be = document.getElementById('btn-ei');
   const ki = document.getElementById('kuvaus-input');
   if (bi) bi.classList.remove('valittu');
   if (be) be.classList.remove('valittu');
   if (ki) ki.value = '';
+  ['lt-jakso','lt-vuoropari','lt-pallot','lt-lyoja'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
   document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('sel-fa','sel-vk'));
   updateFigure();
 }
 
 // ── Havainto: listaus ──────────────────────────────────────────
+function lisatiedotStr(h) {
+  const parts = [];
+  if (h.jakso)                          parts.push('J'+h.jakso);
+  if (h.pallot !== undefined && h.pallot !== '') parts.push(h.pallot+'p');
+  if (h.vuoropari)                      parts.push('pari '+h.vuoropari);
+  if (h.lyoja)                          parts.push(h.lyoja);
+  if (h.etenijat)                       parts.push(h.etenijat.split(',').filter(Boolean).map(p=>p+'-pesä').join('+'));
+  if (h.varit)                          parts.push(h.varit.split(',').filter(Boolean).join(', '));
+  return parts.join(' · ');
+}
+
 function posStrH(h) {
   const fa = (h.viuhka_puoli && h.viuhka_korkeus)
     ? `🔵 ${PL[h.viuhka_puoli]||h.viuhka_puoli} ${KL[h.viuhka_korkeus]||h.viuhka_korkeus}${h.viuhka_ote && h.viuhka_ote!=='ei_nay'?' · '+OL[h.viuhka_ote]:''}`
@@ -621,6 +718,7 @@ function renderHavainnot() {
       <span class="badge ${cls}" style="margin-top:2px">${label}</span>
       <span class="havainto-teksti">
         ${pos ? `<span style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:2px">${pos}</span>` : ''}
+        ${(() => { const lt = lisatiedotStr(h); return lt ? `<span style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:2px">${esc(lt)}</span>` : ''; })()}
         ${h.kuvaus ? esc(h.kuvaus) : '<span class="muted" style="font-size:.82rem">Ei tekstikuvausta</span>'}
       </span>
       <button class="havainto-muokkaa" onclick="avaaModal('${h.id}')">muokkaa</button>
@@ -735,8 +833,9 @@ function kopioimAAnalyysiin() {
   }
   const fmtH = h => {
     const pos = posStrH(h);
+    const lt  = lisatiedotStr(h);
     const txt = h.kuvaus || '';
-    return [pos, txt].filter(Boolean).join(' | ');
+    return [pos, lt, txt].filter(Boolean).join(' | ');
   };
   const meniRivit = meniH.map((h,i) => `${i+1}. ${fmtH(h)}`).join('\n');
   const poisRivit = poisH.map((h,i) => `${i+1}. ${fmtH(h)}`).join('\n');
