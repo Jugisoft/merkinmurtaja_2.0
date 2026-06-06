@@ -1049,7 +1049,23 @@ ${meniRivit || '(ei havaintoja)'}
 === EI MENNYT — etenijä ei lähtenyt (${poisH.length} havaintoa) ===
 ${poisRivit || '(ei havaintoja)'}
 
-Vastaa suomeksi. Anna selkeä analyysi: mikä näyttää olevan lähtemismerkki, mitkä piirteet erottavat ryhmät toisistaan, ja kuinka varma olet johtopäätöksestä?`;
+# Merkinmurtaja — pesäpallon merkkikielen analyysi
+
+## Tausta
+
+Pesäpallossa pelinjohtaja viestii etenijöille (pesillä oleville juoksijoille) väriviuhkalla ja vapaalla kädellä milloin etenijä saa lähteä pesältä — tätä kutsutaan merkkipeliksi. Viuhkassa on värillisiä suikaleita (lakuja), joiden asento ja järjestys määrittävät merkin. Vapaa käsi antaa lisäinformaatiota.
+
+Yleisimmät merkit: Lento = lähdetään heti syötöstä · Sikalento = lähdetään kaikista syötöistä · Väärät pois = kuunnellaan väärä-huuto, lähdetään sen jälkeen · Nopea väärä = huudetaan väärä nousevaan palloon · Pois = ei lähtöä. Kieltomerkki (tietty asento tai väri) voi kumota muun merkin.
+
+## Dataformaatti
+
+Viuhkakäsi 🔵: puoli (3-puoli=vasen/lähtöpesä, Edessä=suoraan, 2-puoli=oikea/menopesä) · korkeus (ylh./keski/koukussa/alh.) · ote (rystyset tai peukalo kentälle päin)
+Vapaa käsi 🟠: asento (auki / nyrkki / kiinni viuhkasta)
+Lisätieto: jakso · vuoropari · palot · lyöjä · etenijät pesillä · värit · vapaa kuvaus
+
+---
+
+Vastaa suomeksi. Rakenne: 1) Johtopäätös — mikä on todennäköinen lähtemismerkki, 2) Perustelut — mitkä datapisteet tukevat, 3) Poikkeukset — mitä ei sovi malliin (kieltomerkki? tilanneriippuvuus?), 4) Varmuusaste, 5) Mitä lisähavaintoja kannattaisi kirjata.`;
 
   navigator.clipboard.writeText(prompt).then(() => {
     const btn = document.getElementById('kopioi-btn');
