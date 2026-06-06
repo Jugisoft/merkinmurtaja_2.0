@@ -268,8 +268,21 @@ details[open]>summary::after{content:'▾'}
               </select>
             </div>
             <div style="flex:2">
-              <div class="sub-lbl">Lyöjä</div>
-              <input type="text" id="lt-lyoja" placeholder="nimi tai numero">
+              <div class="sub-lbl">Lyöjä (vuorojärjestysnumero)</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:2px">
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="1"  onclick="toggleLyoja('1')">1</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="2"  onclick="toggleLyoja('2')">2</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="3"  onclick="toggleLyoja('3')">3</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="4"  onclick="toggleLyoja('4')">4</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="5"  onclick="toggleLyoja('5')">5</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="6"  onclick="toggleLyoja('6')">6</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="7"  onclick="toggleLyoja('7')">7</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="8"  onclick="toggleLyoja('8')">8</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="9"  onclick="toggleLyoja('9')">9</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="10" onclick="toggleLyoja('10')">10</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="11" onclick="toggleLyoja('11')">11</button>
+                <button type="button" class="pos-btn" style="flex:none" data-lyoja="12" onclick="toggleLyoja('12')">12</button>
+              </div>
             </div>
           </div>
           <div class="sub-lbl">Monesko lyönti</div>
@@ -382,6 +395,7 @@ let vapaaKasi  = {puoli:'', korkeus:'', asento:''};
 let ltEtenijat = [];
 let ltVarit    = [];
 let ltLyonti   = '';
+let ltLyoja    = '';
 
 // SVG arm coordinates (shoulder junction at x=110, y=72 in viewBox 0 0 220 230)
 const ARM_ORIGIN = {x: 110, y: 72};
@@ -478,6 +492,13 @@ function avaaOttelu(id, nimi) {
   irrota();
   currentOtteluId = id;
   havainnot = [];
+  // Täysi nollaus uuden ottelun aluksi (myös pysyvät kentät)
+  ltEtenijat = []; ltVarit = []; ltLyonti = ''; ltLyoja = '';
+  const jk = document.getElementById('lt-jakso');
+  const vp = document.getElementById('lt-vuoropari');
+  if (jk) jk.value = '';
+  if (vp) vp.value = '';
+  document.querySelectorAll('[data-et],[data-lyoja]').forEach(b => b.classList.remove('sel-fa','sel-vk'));
   resetSyotto();
   document.getElementById('syotto-otsikko').textContent = nimi;
   document.getElementById('syotto-sub').textContent = 'Ladataan...';
@@ -551,6 +572,11 @@ function avaaAnalyysiKaikki() {
 }
 
 // ── Lisätiedot toggles ─────────────────────────────────────────
+function toggleLyoja(n) {
+  ltLyoja = (ltLyoja === n) ? '' : n;
+  document.querySelectorAll('[data-lyoja]').forEach(b =>
+    b.classList.toggle('sel-fa', b.dataset.lyoja === ltLyoja));
+}
 function toggleLyonti(n) {
   ltLyonti = (ltLyonti === n) ? '' : n;
   document.querySelectorAll('[data-lyonti]').forEach(b =>
@@ -661,7 +687,7 @@ function tallennaHavainto() {
     jakso:          document.getElementById('lt-jakso').value,
     vuoropari:      document.getElementById('lt-vuoropari').value.trim(),
     pallot:         document.getElementById('lt-pallot').value,
-    lyoja:          document.getElementById('lt-lyoja').value.trim(),
+    lyoja:          ltLyoja,
     lyonti:         ltLyonti,
     etenijat:       ltEtenijat.join(','),
     varit:          ltVarit.join(','),
@@ -678,19 +704,22 @@ function resetSyotto() {
   tulostila  = 'epasela';
   viuhka     = {puoli:'', korkeus:'', ote:''};
   vapaaKasi  = {puoli:'', korkeus:'', asento:''};
-  ltEtenijat = [];
-  ltVarit    = [];
-  ltLyonti   = '';
+  // Nollataan per-syöttö-kentät; jakso/vuoropari/etenijät/lyöjä säilyvät
+  ltVarit  = [];
+  ltLyonti = '';
   const bi = document.getElementById('btn-meni');
   const be = document.getElementById('btn-ei');
   const ki = document.getElementById('kuvaus-input');
   if (bi) bi.classList.remove('valittu');
   if (be) be.classList.remove('valittu');
   if (ki) ki.value = '';
-  ['lt-jakso','lt-vuoropari','lt-pallot','lt-lyoja'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
-  document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('sel-fa','sel-vk'));
+  const pp = document.getElementById('lt-pallot');
+  if (pp) pp.value = '';
+  // Nollaa asento- ja lyönti-napit mutta EI etenijä- eikä lyöjä-nappeja
+  document.querySelectorAll('.pos-btn:not([data-et]):not([data-lyoja])').forEach(b =>
+    b.classList.remove('sel-fa','sel-vk'));
+  viuhka    = {puoli:'', korkeus:'', ote:''};
+  vapaaKasi = {puoli:'', korkeus:'', asento:''};
   updateFigure();
 }
 
