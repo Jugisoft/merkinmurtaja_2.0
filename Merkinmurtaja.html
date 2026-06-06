@@ -489,6 +489,62 @@ function poistaModal() {
 // ══════════════════════════════════════════════════════════════════
 // ANALYYSI
 // ══════════════════════════════════════════════════════════════════
+function kopioimAAnalyysiin() {
+  const meniH = havainnot.filter(h => MENI_TULOKSET.has(h.tulos) && h.kuvaus);
+  const poisH = havainnot.filter(h => h.tulos === 'pois' && h.kuvaus);
+
+  if (meniH.length + poisH.length < 2) {
+    alert('Lisää ensin kuvauksia havaintoihin ennen analyysiä.');
+    return;
+  }
+
+  const meniRivit = meniH.map((h,i) => `${i+1}. ${h.kuvaus}`).join('\n');
+  const poisRivit = poisH.map((h,i) => `${i+1}. ${h.kuvaus}`).join('\n');
+
+  const prompt = `Olet pesäpallon merkkikielen analysoija. Alla on havaintoja ottelusta, joissa etenijä joko lähti pesältä (MENI) tai ei lähtenyt (EI MENNYT). Jokainen havainto on analysoijan vapaa kuvaus siitä mitä pelinjohtaja teki — viuhkan asento, käden asento, sijainti jne.
+
+Tehtäväsi: selvitä mikä on vastustajan lähtemismerkki. Etsi toistuvia piirteitä MENI-ryhmässä jotka puuttuvat EI MENNYT -ryhmästä tai päinvastoin. Huomioi myös yhdistelmät (esim. viuhkan asento + käden asento yhdessä).
+
+=== MENI — etenijä lähti (${meniH.length} havaintoa) ===
+${meniRivit || '(ei kuvauksia)'}
+
+=== EI MENNYT — etenijä ei lähtenyt (${poisH.length} havaintoa) ===
+${poisRivit || '(ei kuvauksia)'}
+
+Vastaa suomeksi. Anna selkeä analyysi: mikä näyttää olevan lähtemismerkki, mitkä piirteet erottavat ryhmät toisistaan, ja kuinka varma olet johtopäätöksestä?`;
+
+  navigator.clipboard.writeText(prompt).then(() => {
+    const btn = document.getElementById('kopioi-btn');
+    btn.textContent = '✅ Kopioitu! Liitä claude.ai-chattiin';
+    btn.style.background = 'rgba(79,207,122,.15)';
+    btn.style.borderColor = 'var(--success)';
+    btn.style.color = 'var(--success)';
+    setTimeout(() => {
+      btn.textContent = '🤖 Kopioi Claude AI -analyysiin';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }, 4000);
+  }).catch(() => {
+    // Fallback jos clipboard ei toimi
+    prompt_fallback(prompt);
+  });
+}
+
+function prompt_fallback(teksti) {
+  const ta = document.createElement('textarea');
+  ta.value = teksti;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  const btn = document.getElementById('kopioi-btn');
+  btn.textContent = '✅ Kopioitu!';
+  setTimeout(() => { btn.textContent = '🤖 Kopioi Claude AI -analyysiin'; }, 3000);
+}
+
 function renderAnalyysi() {
   const el = document.getElementById('analyysi-content');
   if (!havainnot.length) {
@@ -502,6 +558,20 @@ function renderAnalyysi() {
   const teksti = tekstianalyysi(havainnot);
 
   el.innerHTML = `
+    <!-- AI-analyysi nappi -->
+    <div class="card" style="text-align:center;padding:20px">
+      <div style="font-size:1.5rem;margin-bottom:8px">🤖</div>
+      <p style="font-size:.9rem;margin-bottom:14px;color:var(--text)">
+        Kopioi havainnot valmiina kysymyksenä Claude AI:lle.<br>
+        <span class="muted" style="font-size:.82rem">Liitä teksti claude.ai-chattiin → saat tulkinnan.</span>
+      </p>
+      <button id="kopioi-btn" class="btn btn-full" style="font-size:1rem;padding:14px;border-color:var(--accent);color:var(--accent)"
+        onclick="kopioimAAnalyysiin()">🤖 Kopioi Claude AI -analyysiin</button>
+      <div style="margin-top:10px">
+        <a href="https://claude.ai" target="_blank" class="muted" style="font-size:.8rem">Avaa claude.ai →</a>
+      </div>
+    </div>
+
     <!-- Luvut -->
     <div class="card">
       <div class="card-title">Yhteenveto</div>
