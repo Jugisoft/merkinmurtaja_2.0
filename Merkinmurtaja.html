@@ -865,9 +865,26 @@ function tallennaHavainto() {
     luotu:          new Date().toISOString(),
     kirjaaja:       kayttaja,
   };
-  db.ref('havainnot/'+currentOtteluId).push(data).then(() => {
+  db.ref('havainnot/'+currentOtteluId).push(data).then((ref) => {
     resetSyotto();
-    flash('tallenna-flash','✅ Tallennettu!', false);
+    const el = document.getElementById('tallenna-flash');
+    if (el) {
+      el.innerHTML = `<div class="flash flash-ok" style="display:flex;align-items:center;gap:8px;">
+        <span>✅ Tallennettu!</span>
+        <button onclick="kumoaViimeisin('${ref.key}')"
+          style="padding:4px 10px;border-radius:6px;border:1px solid var(--danger);background:transparent;color:var(--danger);font-size:.8rem;cursor:pointer;white-space:nowrap;flex-shrink:0">
+          ↩ Kumoa
+        </button>
+      </div>`;
+      setTimeout(() => { el.innerHTML = ''; }, 8000);
+    }
+  });
+}
+
+function kumoaViimeisin(key) {
+  if (!currentOtteluId || !key) return;
+  db.ref('havainnot/'+currentOtteluId+'/'+key).remove().then(() => {
+    flash('tallenna-flash','↩ Havainto poistettu.', false);
   });
 }
 
