@@ -140,6 +140,34 @@ const VAARAT_MAX = {{ asetukset.vaarat_pois_max_ms|int }};
     </div>
   </div>
 
+  <!-- ══ PELITILANNE ══ -->
+  <div class="card">
+    <div class="card-title">Pelitilanne</div>
+    <label>Jakso</label>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      {% for j in [1,2] %}
+      <button type="button" class="valinta-btn jakso-btn" style="flex:1;"
+              onclick="valitseJakso({{ j }})">{{ j }}. jakso</button>
+      {% endfor %}
+    </div>
+    <label>Vuoropari</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      {% for vp in [1,2,3,4,5] %}
+      <button type="button" class="valinta-btn vuoropari-btn" style="flex:1;min-width:40px;"
+              onclick="valitseVuoropari({{ vp }})">{{ vp }}</button>
+      {% endfor %}
+    </div>
+    <label>Palot alla</label>
+    <div style="display:flex;gap:8px;">
+      <button type="button" class="valinta-btn pallot-btn" style="flex:1;" onclick="valitsePallot(0)">0 paloa</button>
+      <button type="button" class="valinta-btn pallot-btn" style="flex:1;" onclick="valitsePallot(1)">1 palo</button>
+      <button type="button" class="valinta-btn pallot-btn" style="flex:1;" onclick="valitsePallot(2)">2 paloa</button>
+    </div>
+    {% for p in [0,1,2] %}
+    <input type="radio" name="pallot" value="{{ p }}" id="pallot{{ p }}" style="display:none;" {% if p==0 %}checked{% endif %}>
+    {% endfor %}
+  </div>
+
   <!-- ══ KUVAUS ══ -->
   <div class="card">
     <div class="card-title">Mitä näit? <span class="muted" style="font-weight:400;">(vapaa kuvaus)</span></div>
@@ -177,22 +205,6 @@ const VAARAT_MAX = {{ asetukset.vaarat_pois_max_ms|int }};
         <!-- Jakso, Vuoropari, Tilanne, Lyöjä, Etenijät -->
         <div class="card-title" style="margin-top:12px;">Ottelutilanne</div>
 
-        <label>Jakso</label>
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-          {% for j in [1,2] %}
-          <button type="button" class="valinta-btn jakso-btn" style="flex:1;"
-                  onclick="valitseJakso({{ j }})">{{ j }}. jakso</button>
-          {% endfor %}
-        </div>
-
-        <label>Vuoropari</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-          {% for vp in [1,2,3,4,5] %}
-          <button type="button" class="valinta-btn vuoropari-btn" style="flex:1;min-width:40px;"
-                  onclick="valitseVuoropari({{ vp }})">{{ vp }}</button>
-          {% endfor %}
-        </div>
-
         <label>Tilanne</label>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
           {% for t in tilanteet %}
@@ -224,29 +236,17 @@ const VAARAT_MAX = {{ asetukset.vaarat_pois_max_ms|int }};
 
         <!-- Tilanne -->
         <div class="card-title" style="margin-top:12px;">Syöttötilanne</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-          <div>
-            <label>Vuoro</label>
+        <div style="margin-bottom:12px;">
+          <label>Vuoro</label>
+          {% for v in range(1,10) %}
+          <input type="radio" name="vuoro" value="{{ v }}" id="vuoro{{ v }}" style="display:none;" {% if v==1 %}checked{% endif %}>
+          {% endfor %}
+          <div style="display:flex;flex-wrap:wrap;gap:5px;">
             {% for v in range(1,10) %}
-            <input type="radio" name="vuoro" value="{{ v }}" id="vuoro{{ v }}" style="display:none;" {% if v==1 %}checked{% endif %}>
+            <button type="button" class="number-btn {% if v==1 %}valittu{% endif %}"
+                    style="flex:0 0 calc(33% - 4px);padding:8px;font-size:.9rem;"
+                    onclick="valitseVuoro({{ v }})">{{ v }}</button>
             {% endfor %}
-            <div style="display:flex;flex-wrap:wrap;gap:5px;">
-              {% for v in range(1,10) %}
-              <button type="button" class="number-btn {% if v==1 %}valittu{% endif %}"
-                      style="flex:0 0 calc(33% - 4px);padding:8px;font-size:.9rem;"
-                      onclick="valitseVuoro({{ v }})">{{ v }}</button>
-              {% endfor %}
-            </div>
-          </div>
-          <div>
-            <label>Palloja</label>
-            <div style="display:flex;gap:8px;">
-              {% for p in [0,1,2] %}
-              <button type="button" class="number-btn {% if p==0 %}valittu{% endif %}"
-                      onclick="valitsePallot({{ p }})">{{ p }}</button>
-              <input type="radio" name="pallot" value="{{ p }}" id="pallot{{ p }}" style="display:none;" {% if p==0 %}checked{% endif %}>
-              {% endfor %}
-            </div>
           </div>
         </div>
         <label>Etenijät pesillä</label>
@@ -443,10 +443,10 @@ function valitseVuoro(v){
 }
 function valitsePallot(p){
   document.getElementById('pallot'+p).checked=true;
-  document.querySelectorAll('#syotto-form .number-btn').forEach(b=>{
-    if(b.getAttribute('onclick')===`valitsePallot(${p})`)b.classList.add('valittu');
-    else if(b.getAttribute('onclick')?.startsWith('valitsePallot'))b.classList.remove('valittu');
+  document.querySelectorAll('.pallot-btn').forEach(b=>{
+    b.classList.toggle('valittu', b.getAttribute('onclick')===`valitsePallot(${p})`);
   });
+  sessionStorage.setItem('mm_pallot',p);
 }
 function valitseEtenijat(e){
   document.getElementById('etenijat-input').value=e;
@@ -467,12 +467,14 @@ function valitseJakso(j){
   document.querySelectorAll('.jakso-btn').forEach(b=>{
     b.classList.toggle('valittu', b.getAttribute('onclick')===`valitseJakso(${j})`);
   });
+  sessionStorage.setItem('mm_jakso',j);
 }
 function valitseVuoropari(v){
   document.getElementById('vuoropari-input').value=v;
   document.querySelectorAll('.vuoropari-btn').forEach(b=>{
     b.classList.toggle('valittu', b.getAttribute('onclick')===`valitseVuoropari(${v})`);
   });
+  sessionStorage.setItem('mm_vuoropari',v);
 }
 function valitseTilanne(t){
   document.getElementById('tilanne-input').value=t;
@@ -480,5 +482,13 @@ function valitseTilanne(t){
     b.classList.toggle('valittu', b.getAttribute('onclick')===`valitseTilanne('${t}')`);
   });
 }
+document.addEventListener('DOMContentLoaded',function(){
+  const j=sessionStorage.getItem('mm_jakso');
+  if(j)valitseJakso(parseInt(j));
+  const vp=sessionStorage.getItem('mm_vuoropari');
+  if(vp)valitseVuoropari(parseInt(vp));
+  const p=sessionStorage.getItem('mm_pallot');
+  if(p!==null)valitsePallot(parseInt(p));
+});
 </script>
 {% endblock %}
