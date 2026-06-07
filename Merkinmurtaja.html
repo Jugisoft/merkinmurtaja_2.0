@@ -235,10 +235,11 @@ details[open]>summary::after{content:'▾'}
         </div>
         <div class="sub-lbl">Asento</div>
         <div class="pos-row">
-          <button class="pos-btn" data-g="vk-asento" data-v="auki"    onclick="valitsePos('vk','asento','auki')"><span style="color:#4fcf7a">●</span> Auki</button>
-          <button class="pos-btn" data-g="vk-asento" data-v="nyrkki" onclick="valitsePos('vk','asento','nyrkki')"><span style="color:#f75757">●</span> Nyrkki</button>
-          <button class="pos-btn" data-g="vk-asento" data-v="kiinni" onclick="valitsePos('vk','asento','kiinni')"><span style="color:#4f8ef7">●</span> Kiinni viuhkasta</button>
-          <button class="pos-btn" data-g="vk-asento" data-v="ei_nay" onclick="valitsePos('vk','asento','ei_nay')">Ei näy</button>
+          <button class="pos-btn" data-g="vk-asento" data-v="auki"       onclick="valitsePos('vk','asento','auki')"><span style="color:#4fcf7a">●</span> Auki</button>
+          <button class="pos-btn" data-g="vk-asento" data-v="nyrkki"    onclick="valitsePos('vk','asento','nyrkki')"><span style="color:#f75757">●</span> Nyrkki</button>
+          <button class="pos-btn" data-g="vk-asento" data-v="kiinni"    onclick="valitsePos('vk','asento','kiinni')"><span style="color:#4f8ef7">●</span> Kiinni viuhkasta</button>
+          <button class="pos-btn" data-g="vk-asento" data-v="passiivinen" onclick="valitsePos('vk','asento','passiivinen')"><span style="color:#a0a0c0">●</span> Passiivinen</button>
+          <button class="pos-btn" data-g="vk-asento" data-v="ei_nay"    onclick="valitsePos('vk','asento','ei_nay')">Ei näy</button>
         </div>
       </div>
 
@@ -447,7 +448,7 @@ const ARM_COORDS = {
 const PL = {lahto:'3-puoli', edessa:'Edessä', meno:'2-puoli'};
 const KL = {ylos:'ylh.', keski:'sivulla', koukku:'koukussa', alas:'alh.'};
 const OL = {rystyset:'rystyset', peukalo:'peukalo', ei_nay:'ei näy'};
-const AL = {auki:'auki', nyrkki:'nyrkki', kiinni:'kiinni viuhkasta', ei_nay:'ei näy'};
+const AL = {auki:'auki', nyrkki:'nyrkki', kiinni:'kiinni viuhkasta', passiivinen:'passiivinen', ei_nay:'ei näy'};
 
 // ── Init ───────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -765,7 +766,7 @@ function updateFigure() {
             '#4f8ef7', {rystyset:'#f75757', peukalo:'#f7e14f', ei_nay:null},
             {x:76, y:120});
   updateArm('vk', vapaaKasi.puoli, vapaaKasi.korkeus, vapaaKasi.asento,
-            '#f7a34f', {auki:'#4fcf7a', nyrkki:'#f75757', kiinni:'#4f8ef7', ei_nay:null},
+            '#f7a34f', {auki:'#4fcf7a', nyrkki:'#f75757', kiinni:'#4f8ef7', passiivinen:'#a0a0c0', ei_nay:null},
             {x:144, y:120});
 }
 

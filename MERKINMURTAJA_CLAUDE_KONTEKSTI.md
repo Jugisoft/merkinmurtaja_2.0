@@ -48,7 +48,7 @@ Joukkueen jäsenet kirjaavat reaaliajassa ottelusta havaintoja: **mikä asento p
 - **Ote:** `rystyset` = rystyset kentälle päin, `peukalo` = peukalo kentälle päin, `ei näy` = ote ei näy
 
 **Vapaa käsi 🟠:**
-- **Asento:** `auki` = avoin kämmen, `nyrkki` = nyrkki, `kiinni viuhkasta` = pitää kiinni viuhkasta, `ei näy` = ei näy
+- **Asento:** `auki` = avoin kämmen, `nyrkki` = nyrkki, `kiinni viuhkasta` = pitää kiinni viuhkasta, `passiivinen` = käsi roikkuu passiivisena sivulla (voi olla merkityksetön tai merkkaava), `ei näy` = ei näy
 
 ### Tilannetiedot (lisäinfo)
 - **Jakso:** 1 / 2 / K (kolmas erä / jatkoerät)
