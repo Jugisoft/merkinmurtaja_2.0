@@ -273,12 +273,11 @@ details[open]>summary::after{content:'▾'}
           <div style="display:flex;gap:8px;margin-bottom:10px">
             <div style="flex:1">
               <div class="sub-lbl">Palot</div>
-              <select id="lt-pallot">
-                <option value="">—</option>
-                <option value="0">0 paloa</option>
-                <option value="1">1 palo</option>
-                <option value="2">2 paloa</option>
-              </select>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:2px">
+                <button type="button" class="pos-btn" style="flex:none" data-palot="0" onclick="togglePalot('0')">0</button>
+                <button type="button" class="pos-btn" style="flex:none" data-palot="1" onclick="togglePalot('1')">1</button>
+                <button type="button" class="pos-btn" style="flex:none" data-palot="2" onclick="togglePalot('2')">2</button>
+              </div>
             </div>
             <div style="flex:2">
               <div class="sub-lbl">Lyöjä (vuorojärjestysnumero)</div>
@@ -426,6 +425,7 @@ let ltLyonti   = '';
 let ltLyoja    = '';
 let ltJakso    = '';
 let ltVuoropari = '';
+let ltPalot    = '';
 
 // SVG arm coordinates (shoulder junction at x=110, y=72 in viewBox 0 0 220 230)
 const ARM_ORIGIN = {x: 110, y: 72};
@@ -532,8 +532,8 @@ function avaaOttelu(id, nimi) {
   havainnot = [];
   // Täysi nollaus uuden ottelun aluksi (myös pysyvät kentät)
   ltEtenijat = []; ltVarit = []; ltLyonti = ''; ltLyoja = '';
-  ltJakso = ''; ltVuoropari = '';
-  document.querySelectorAll('[data-et],[data-lyoja],[data-jakso],[data-vp]').forEach(b =>
+  ltJakso = ''; ltVuoropari = ''; ltPalot = '';
+  document.querySelectorAll('[data-et],[data-lyoja],[data-jakso],[data-vp],[data-palot]').forEach(b =>
     b.classList.remove('sel-fa','sel-vk'));
   localStorage.setItem('mm_ottelu_id',   id);
   localStorage.setItem('mm_ottelu_nimi', nimi);
@@ -726,6 +726,11 @@ function toggleVuoropari(v) {
   document.querySelectorAll('[data-vp]').forEach(b =>
     b.classList.toggle('sel-fa', b.dataset.vp === ltVuoropari));
 }
+function togglePalot(v) {
+  ltPalot = (ltPalot === v) ? '' : v;
+  document.querySelectorAll('[data-palot]').forEach(b =>
+    b.classList.toggle('sel-fa', b.dataset.palot === ltPalot));
+}
 function toggleLyoja(n) {
   ltLyoja = (ltLyoja === n) ? '' : n;
   document.querySelectorAll('[data-lyoja]').forEach(b =>
@@ -840,7 +845,7 @@ function tallennaHavainto() {
     vapaa_asento:   vapaaKasi.asento,
     jakso:          ltJakso,
     vuoropari:      ltVuoropari,
-    pallot:         document.getElementById('lt-pallot').value,
+    pallot:         ltPalot,
     lyoja:          ltLyoja,
     lyonti:         ltLyonti,
     etenijat:       ltEtenijat.join(','),
@@ -867,10 +872,8 @@ function resetSyotto() {
   if (bi) bi.classList.remove('valittu');
   if (be) be.classList.remove('valittu');
   if (ki) ki.value = '';
-  const pp = document.getElementById('lt-pallot');
-  if (pp) pp.value = '';
-  // Nollaa asento- ja lyönti-napit mutta EI etenijä- eikä lyöjä-nappeja
-  document.querySelectorAll('.pos-btn:not([data-et]):not([data-lyoja])').forEach(b =>
+  // Nollaa asento- ja lyönti-napit mutta EI etenijä-, lyöjä-, jakso-, vuoropari- eikä palot-nappeja
+  document.querySelectorAll('.pos-btn:not([data-et]):not([data-lyoja]):not([data-jakso]):not([data-vp]):not([data-palot])').forEach(b =>
     b.classList.remove('sel-fa','sel-vk'));
   viuhka    = {puoli:'', korkeus:'', ote:''};
   vapaaKasi = {puoli:'', korkeus:'', asento:''};
